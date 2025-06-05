@@ -101,69 +101,52 @@ const StrokeRiskAssessmentScreen = () => {
     setter(prev => !prev);
   };
 
-  const calculateRiskScore = () => {
-    let score = 0;
-    
-    // Basic risk factor calculations based on the provided scoring system
-    const ageNum = parseInt(age) || 0;
-    const bmiNum = parseFloat(bmi) || 0;
-    
-    // SMOKING (1 point)
-    if (smoke === 'yes') score += 1;
-    
-    // HYPERTENSION (4 points)
-    if (hypertension === 'yes' || (bloodPressure && parseFloat(bloodPressure.split('/')[0]) > 140)) score += 4;
-    
-    // AGE more than 60 (1 point)
-    if (ageNum > 60) score += 1;
-    
-    // ALCOHOL ABUSE (1 point)
-    if (alcohol === 'yes') score += 1;
-    
-    // ATRIAL FIBRILLATION - irregular pulse (4 points)
-    if (irregularHeartbeat === 'yes') score += 4;
-    
-    // DIABETES (2 points)
-    if (diabetes === 'yes') score += 2;
-    
-    // OBESITY (BMI > 30) (1 point)
-    if (bmiNum > 30) score += 1;
-    
-    // FAMILY HISTORY (1 point)
-    if (familyHistory === 'yes') score += 1;
-    
-    // SEDENTARY LIFESTYLE (1 point)
-    if (exercise === 'no') score += 1;
-    
-    // HISTORY OF TIA (Symptoms suggesting TIA) (1 point)
-    if (symptoms.length >= 2) score += 1;
-    
-    // HISTORY of previous brain stroke, Coronary or Kidney disease (1 point)
-    if (heartDisease) score += 1;
+ const calculateRiskScore = () => {
+  let score = 0;
+  const ageNum = parseInt(age) || 0;
+  const bmiNum = parseFloat(bmi) || 0;
 
-    // TIA specific scoring
-    if (tiaHistory === 'yes') score += 1;
+  if (smoke === 'yes') score += 1;
+  if (hypertension === 'yes' || (bloodPressure && parseFloat(bloodPressure.split('/')[0]) > 140)) score += 4;
+  if (ageNum > 60) score += 1;
+  if (alcohol === 'yes') score += 1;
+  if (irregularHeartbeat === 'yes') score += 4;
+  if (diabetes === 'yes') score += 2;
+  if (bmiNum > 30) score += 1;
+  if (familyHistory === 'yes') score += 1;
+  if (exercise === 'no') score += 1;
+  if (symptoms.length >= 2) score += 1;
+  if (heartDisease) score += 1;
+  if (tiaHistory === 'yes') score += 1;
 
-    // Determine risk category and recommendations
-    let category = '';
-    let recommendationText = '';
+  let category = '';
+  let recommendationText = '';
 
-    if (score <= 3) {
-      category = 'Low';
-      recommendationText = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups.';
-    } else if (score >= 4 && score <= 7) {
-      category = 'Moderate';
-      recommendationText = 'Moderate risk detected. Consider dietary modifications, regular exercise, and follow-up with your physician.';
-    } else {
-      category = 'High';
-      recommendationText = 'High risk detected. Immediate consultation with a healthcare provider is recommended. Consider comprehensive medical investigations including ECG, fundoscopy, and relevant lab tests.';
-    }
+  if (score <= 3) {
+    category = 'Low';
+    recommendationText = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups.';
+  } else if (score >= 4 && score <= 7) {
+    category = 'Moderate';
+    recommendationText = 'Moderate risk detected. Consider dietary modifications, regular exercise, and follow-up with your physician.';
+  } else {
+    category = 'High';
+    recommendationText = 'High risk detected. Immediate consultation with a healthcare provider is recommended.';
+  }
 
-    setRiskScore(score);
-    setRiskCategory(category);
-    setRecommendations(recommendationText);
-    setResultModalVisible(true);
+  // Set UI states
+  setRiskScore(score);
+  setRiskCategory(category);
+  setRecommendations(recommendationText);
+  setResultModalVisible(true);
+
+  // Return data to be submitted
+  return {
+    score,
+    category,
+    tips: recommendationText
   };
+};
+
 
   // Form validation
   const validateForm = () => {
@@ -174,11 +157,115 @@ const StrokeRiskAssessmentScreen = () => {
     return true;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      calculateRiskScore();
-    }
+  const handleSubmit = async (e) => {
+  e.preventDefault(); // Prevent default form submission behavior
+
+  console.log("Form submission triggered.");
+
+  // Run validation
+  if (!validateForm()) {
+    console.warn("Validation failed.");
+    return;
+  }
+
+  // Ensure risk score is calculated before submission
+  const { score, category, tips } = calculateRiskScore(); // ← modify if yours sets state
+
+  // Prepare data
+  const formData = {
+    // Personal Information
+    name,
+    age: parseInt(age),
+    gender,
+    email,
+    maritalStatus,
+    locality,
+    durationOfStay,
+
+    // Basic Parameters
+    bloodPressure,
+    pulse,
+    weight,
+    height,
+    bmi,
+
+    // Personal History
+    exercise,
+    exerciseFrequency,
+    diet,
+    outsideFood,
+    education,
+    profession,
+    alcohol,
+    smoke,
+
+    // Medical History
+    hypertension,
+    diabetes,
+    cholesterol,
+    irregularHeartbeat,
+    snoring,
+    otherCondition,
+    bpCheckFrequency,
+
+    // Female-specific
+    contraceptives,
+    hormoneTherapy,
+    pregnancyHypertension,
+
+    // Family History
+    familyHistory,
+    dependents,
+    insurance,
+
+    // Past History
+    thyroidDisease,
+    heartDisease,
+    asthma,
+    migraine,
+
+    // TIA History
+    tiaHistory,
+    tiaFrequency,
+    tiaSymptoms,
+    lastTiaOccurrence,
+
+    // Symptoms
+    symptoms,
+
+    // Risk Results
+    riskScore: score,
+    riskCategory: category,
+    recommendations: tips || ""
   };
+
+  console.log("Submitting formData:", formData);
+
+  try {
+    const response = await fetch("http://localhost:5000/api/assessments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(formData)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log("Assessment saved successfully:", result.data);
+      alert("Assessment submitted successfully.");
+      // Optional: navigate to results or reset form
+    } else {
+      console.error("Failed to save assessment:", result.message);
+      alert("Something went wrong. Try again.");
+    }
+  } catch (error) {
+    console.error("Error submitting assessment:", error);
+    alert("Network error. Try again.");
+  }
+};
+
 
   const RadioGroup = ({ options, value, onChange, name }) => (
     <div className="radio-group">
@@ -1022,20 +1109,20 @@ const StrokeRiskAssessmentScreen = () => {
           font-size: 1rem;
           transition: all 0.3s ease;
           background: white;
+          color: #2d3748; /* Add explicit text color */
         }
-
+              
         .form-input:focus {
           outline: none;
           border-color: #667eea;
           box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          color: #2d3748; /* Ensure text color remains visible on focus */
         }
-
-        .form-input.bmi-input {
-          background: #f7fafc;
-          font-weight: 600;
-          color: #4a5568;
+              
+        .form-input::placeholder {
+          color: #a0aec0; /* Set placeholder color for better visibility */
         }
-
+              
         .form-textarea {
           padding: 12px 16px;
           border: 2px solid #e2e8f0;
@@ -1043,15 +1130,21 @@ const StrokeRiskAssessmentScreen = () => {
           font-size: 1rem;
           transition: all 0.3s ease;
           background: white;
+          color: #2d3748; /* Add explicit text color */
           resize: vertical;
           min-height: 80px;
           font-family: inherit;
         }
-
+              
         .form-textarea:focus {
           outline: none;
           border-color: #667eea;
           box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          color: #2d3748; /* Ensure text color remains visible on focus */
+        }
+              
+        .form-textarea::placeholder {
+          color: #a0aec0; /* Set placeholder color for better visibility */
         }
 
         .radio-section {

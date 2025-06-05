@@ -14,6 +14,7 @@ const Header = () => {
           <li><Link to="/about">About Us</Link></li>
           <li><Link to="/risk">Riskometer</Link></li>
           <li><Link to="#">Help</Link></li>
+          <li><Link to="/assessments">View All Assessments</Link></li>
         </ul>
         <div className="profile-dropdown">
           <Link to="/user">

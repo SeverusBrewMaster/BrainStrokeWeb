@@ -6,6 +6,7 @@ import Risk from './pages/Risk';
 import User from './pages/User';
 import Symptom from './pages/Symptom';
 import './App.css';
+import AssessmentsPage from './pages/AssessmentsPage';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/risk" element={<Risk />} />
           <Route path="/user" element={<User />} />
           <Route path="/symptom" element={<Symptom />} />
+          <Route path="/assessments" element={<AssessmentsPage />} />
         </Routes>
       </div>
     </Router>
