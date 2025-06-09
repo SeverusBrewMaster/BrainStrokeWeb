@@ -5,6 +5,9 @@ import About from './pages/About';
 import Risk from './pages/Risk';
 import User from './pages/User';
 import Symptom from './pages/Symptom';
+import Login from "./components/Login";
+import SignUp from "./components/SignUp";
+import NurseDashboard from "./pages/NurseDashboard";
 import './App.css';
 import AssessmentsPage from './pages/AssessmentsPage';
 
@@ -13,7 +16,10 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+          <Route path="/SignUp" element={<SignUp />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/about" element={<About />} />
           <Route path="/risk" element={<Risk />} />
           <Route path="/user" element={<User />} />
