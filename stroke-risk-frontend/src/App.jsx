@@ -8,7 +8,7 @@ import Symptom from './pages/Symptom';
 import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import NurseDashboard from "./pages/NurseDashboard";
-import './App.css';
+import MiddlemanDashboard from './pages/MiddlemanDashboard';
 import AssessmentsPage from './pages/AssessmentsPage';
 
 function App() {
@@ -18,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+          <Route path="/middleman-dashboard" element={<MiddlemanDashboard />} />
           <Route path="/SignUp" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/about" element={<About />} />
