@@ -8,6 +8,7 @@ import Symptom from './pages/Symptom';
 import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import NurseDashboard from "./pages/NurseDashboard";
+import ViewPatients from './pages/ViewPatients';
 import './App.css';
 import AssessmentsPage from './pages/AssessmentsPage';
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/user" element={<User />} />
           <Route path="/symptom" element={<Symptom />} />
           <Route path="/assessments" element={<AssessmentsPage />} />
+          <Route path="/view-patients" element={<ViewPatients/>} />
         </Routes>
       </div>
     </Router>

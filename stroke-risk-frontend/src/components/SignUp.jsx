@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
-import { Link } from "react-router-dom";  // <-- Import Link from react-router-dom
+import { Link } from "react-router-dom";
 import "./SignUp.css";
+import logo from "./logo1.png"; // <-- Correct image import
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -44,7 +45,7 @@ const SignUp = () => {
 
   return (
     <div className="signup-container">
-      <img src="/logo.png" alt="App Logo" className="signup-logo" />
+      <img src={logo} alt="App Logo" className="signup-logo" />
       <h2 className="signup-title">Create Account</h2>
 
       <select

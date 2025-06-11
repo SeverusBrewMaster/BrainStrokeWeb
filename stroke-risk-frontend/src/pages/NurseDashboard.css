@@ -1,150 +1,145 @@
-/* Full screen light background */
+/* General layout */
 .nurse-dashboard {
-  min-height: 100vh;
-  width: 100vw;
-  padding: 40px 20px;
-  box-sizing: border-box;
-  background: #f9fafb;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  color: #222;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  overflow-y: auto;
+  height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Main dashboard title - no underline */
+/* Sidebar Styling */
+.sidebar {
+  width: 220px;
+  background-color: #f2f2f2;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  line-height: 1.2;
+  color: #222;
+}
+
+.sidebar button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 20px;
+  cursor: pointer;
+  padding: 8px;
+  text-align: left;
+  transition: color 0.2s;
+}
+
+.sidebar button:hover {
+  color: #8e44ad;
+}
+
+/* Content Area */
+.dashboard-content {
+  flex: 1;
+  padding: 40px 60px;
+  overflow-y: auto;
+  background-color: #fff;
+}
+
+/* Title */
 .dashboard-title {
-  font-size: 2.8rem;
+  font-size: 2rem;
   font-weight: 700;
   margin-bottom: 30px;
   color: #222;
-  user-select: none;
-  align-self: center;
+  text-align: center;
 }
 
-/* Form styling */
+/* Form Styling */
 form {
-  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  background: #fff;
-  padding: 30px 40px;
-  border-radius: 20px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
+  gap: 35px;
 }
 
-/* Sections inside form */
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 40px;
-  position: relative;
-}
-
-/* Section headings with underline just below text */
+/* Section Headers */
 .section h2 {
-  font-weight: 600;
-  font-size: 1.8rem;
-  margin-bottom: 15px;
-  color: #444;
-  position: relative;
-  padding-bottom: 8px;
-  display: inline-block; /* restrict underline to text */
-}
-
-.section h2::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 5px;
-  width: 100%; /* matches heading width only */
-  border-radius: 4px;
-  background: linear-gradient(90deg, #4a90e2, #8e44ad);
-}
-
-/* Patient Information section */
-.section:nth-of-type(1) {
-  align-items: flex-start;
-  margin-bottom: 50px;
-}
-
-/* Patient input fields */
-.section:nth-of-type(1) input[type="text"],
-.section:nth-of-type(1) input[type="number"],
-.section:nth-of-type(1) input[type="tel"] {
-  max-width: 300px;
-  width: 100%;
-  padding: 14px 18px;
-  border-radius: 12px;
-  border: 1px solid #ccc;
-  font-size: 1.1rem;
-  outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background: #fafafa;
-  color: #333;
-}
-
-/* Patient input focus effect */
-.section:nth-of-type(1) input:focus {
-  border-color: #8e44ad;
-  box-shadow: 0 0 8px #8e44ad;
-  background: #fff;
-}
-
-/* Test Results section layout */
-.section:nth-of-type(2) {
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 20px;
-}
-
-/* Test input fields */
-.section:nth-of-type(2) input {
-  max-width: 250px;
-  flex-basis: calc(33.33% - 20px); /* 3 per row */
-  padding: 14px 18px;
-  border-radius: 12px;
-  border: 1px solid #ccc;
-  font-size: 1.1rem;
-  outline: none;
-  background: #fafafa;
-  color: #333;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Test input focus effect */
-.section:nth-of-type(2) input:focus {
-  border-color: #8e44ad;
-  box-shadow: 0 0 8px #8e44ad;
-  background: #fff;
-}
-
-/* Submit button */
-.submit-button {
-  padding: 16px 0;
   font-size: 1.3rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 40px;
-  background: linear-gradient(90deg, #4a90e2, #8e44ad);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(74, 144, 226, 0.6);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-  user-select: none;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+/* Input Group */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Input Styles */
+.input-group input[type="text"],
+.input-group input[type="number"],
+.input-group input[type="tel"] {
   width: 100%;
-  max-width: 300px;
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  background-color: #fff;
+  color: #000;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Focus styling */
+.input-group input:focus {
+  border-color: #8e44ad;
+  box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.2);
+}
+
+/* Hover styling */
+.input-group input:hover {
+  border-color: #8e44ad;
+  box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.15);
+}
+
+/* Autofill fix */
+input:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px #fff inset;
+  -webkit-box-shadow: 0 0 0px 1000px #fff inset;
+  -webkit-text-fill-color: #000;
+}
+
+/* Submit Button */
+.submit-button {
+  padding: 14px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(to right, #4a90e2, #8e44ad);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  max-width: 200px;
   align-self: center;
+  transition: background 0.3s ease;
 }
 
 .submit-button:hover {
-  background: linear-gradient(90deg, #8e44ad, #4a90e2);
-  box-shadow: 0 10px 25px rgba(142, 68, 173, 0.8);
+  background: linear-gradient(to right, #8e44ad, #4a90e2);
+}
+.gradient-text {
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
