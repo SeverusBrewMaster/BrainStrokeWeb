@@ -4,6 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
+import logo from "./logo1.png"; // <-- Correct import of image from same folder
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ const Login = () => {
     setError("");
 
     if (!email || !password || !role) {
-      setError(" Please fill in all fields.");
+      setError("Please fill in all fields.");
       return;
     }
 
@@ -30,14 +31,14 @@ const Login = () => {
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        setError(" User data not found in Firestore.");
+        setError("User data not found in Firestore.");
         return;
       }
 
       const userData = userSnap.data();
 
       if (userData.role !== role) {
-        setError(` You are not registered as a ${role}.`);
+        setError(`You are not registered as a ${role}.`);
         return;
       }
 
@@ -53,17 +54,17 @@ const Login = () => {
           navigate("/middleman-dashboard");
           break;
         default:
-          setError(" Invalid role selected.");
+          setError("Invalid role selected.");
       }
 
     } catch (err) {
-      setError(" Login failed: " + err.message);
+      setError("Login failed: " + err.message);
     }
   };
 
   return (
     <div className="login-container">
-      <img src="/logo.png" alt="App Logo" className="login-logo" />
+      <img src={logo} alt="App Logo" className="login-logo" />
       <h2 className="login-title">Welcome Back</h2>
 
       <select
