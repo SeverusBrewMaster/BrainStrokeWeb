@@ -8,7 +8,8 @@ import Symptom from './pages/Symptom';
 import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import NurseDashboard from "./pages/NurseDashboard";
-import './App.css';
+import ViewPatients from './pages/ViewPatients';
+import MiddlemanDashboard from './pages/MiddlemanDashboard';
 import AssessmentsPage from './pages/AssessmentsPage';
 
 function App() {
