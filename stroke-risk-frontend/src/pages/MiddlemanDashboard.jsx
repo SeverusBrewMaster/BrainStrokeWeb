@@ -1,42 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Heart, FileText, Save, AlertCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { db } from "../firebase/firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
 const MiddlemanDashboard = () => {
   // State for patient data
-  const [patients, setPatients] = useState([
-    {
-      tokenNumber: 'PAT001',
-      name: 'John D.',
-      age: 45,
-      gender: 'Male',
-      status: 'Pending',
-      lastUpdated: '2025-06-10'
-    },
-    {
-      tokenNumber: 'PAT002',
-      name: 'Sarah M.',
-      age: 32,
-      gender: 'Female',
-      status: 'Complete',
-      lastUpdated: '2025-06-09'
-    },
-    {
-      tokenNumber: 'PAT003',
-      name: 'Robert K.',
-      age: 58,
-      gender: 'Male',
-      status: 'In Progress',
-      lastUpdated: '2025-06-10'
-    },
-    {
-      tokenNumber: 'PAT004',
-      name: 'Emily R.',
-      age: 41,
-      gender: 'Female',
-      status: 'Pending',
-      lastUpdated: '2025-06-08'
-    }
-  ]);
+  const [patients, setPatients] = useState([]);
+
+useEffect(() => {
+  const fetchPatients = async () => {
+    const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setPatients(data);
+  };
+
+  fetchPatients();
+}, []);
 
   const [searchToken, setSearchToken] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -180,6 +160,25 @@ const MiddlemanDashboard = () => {
         : [...prev, symptom]
     );
   };
+  
+  const PatientCard = ({ patient }) => (
+  <div className="horizontal-card">
+    <div className="card-main-info">
+      <p><strong>{patient.name}</strong> | Age: {patient.age} | Ph: {patient.phone}</p>
+    </div>
+    <div className="card-expanded-info">
+      <p><strong>Locality:</strong> {patient.locality}</p>
+      <p><strong>CBP:</strong> {patient.cbp}</p>
+      <p><strong>CRP:</strong> {patient.crp}</p>
+      <p><strong>RBS:</strong> {patient.rbs}</p>
+      <p><strong>HbA1c:</strong> {patient.hba1c}</p>
+      <p><strong>Cholesterol:</strong> {patient.cholesterol}</p>
+      <p><strong>TG:</strong> {patient.tg}</p>
+      <p><strong>Homocysteine:</strong> {patient.homocysteine}</p>
+      <p><strong>Lipoprotein A:</strong> {patient.lipoprotein}</p>
+    </div>
+  </div>
+);
 
   const calculateRiskScore = () => {
     let score = 0;
