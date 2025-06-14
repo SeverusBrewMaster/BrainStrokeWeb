@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Heart, FileText, Save, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Search, User, Heart, FileText, Save, AlertCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 const MiddlemanDashboard = () => {
   // State for patient data
@@ -80,6 +80,49 @@ const MiddlemanDashboard = () => {
   // Symptoms
   const [symptoms, setSymptoms] = useState([]);
 
+  // Add these state variables after the existing useState declarations
+  const [peopleCount, setPeopleCount] = useState({
+    totalAssessed: 0,
+    pendingReview: 0,
+    completed: 0,
+    highRiskPatients: 0
+  });
+
+    // Add these missing state variables
+  const [personalInfo, setPersonalInfo] = useState({
+    name: '', age: '', gender: '', email: '', maritalStatus: '', locality: '', durationOfStay: ''
+  });
+  
+  const [vitals, setVitals] = useState({
+    bloodPressure: '', pulse: '', weight: '', height: '', bmi: ''
+  });
+  
+  const [lifestyle, setLifestyle] = useState({
+    exercise: '', exerciseFrequency: '', diet: '', outsideFood: '', education: '', profession: '', alcohol: '', smoke: ''
+  });
+  
+  const [medicalHistory, setMedicalHistory] = useState({
+    hypertension: '', diabetes: '', cholesterol: '', irregularHeartbeat: '', snoring: '', otherCondition: '', bpCheckFrequency: '', contraceptives: '', hormoneTherapy: '', pregnancyHypertension: ''
+  });
+  
+  const [familyhistory, setFamilyhistory] = useState({
+    familyHistory: '', dependents: '', insurance: ''
+  });
+  
+  const [pastConditions, setPastConditions] = useState({
+    thyroidDisease: false, heartDisease: false, asthma: false, migraine: false
+  });
+  
+  const [tiaData, setTiaData] = useState({
+    tiaHistory: '', tiaFrequency: '', tiaSymptoms: [], lastTiaOccurrence: ''
+  });
+  
+  const [results, setResults] = useState({
+    modalVisible: false, riskScore: 0, riskCategory: '', recommendations: ''
+  });
+
+  const [showDoctorReferral, setShowDoctorReferral] = useState(false);
+
   const [saveStatus, setSaveStatus] = useState('');
 
   // Filter patients based on search
@@ -101,33 +144,34 @@ const MiddlemanDashboard = () => {
   };
 
   const resetForm = () => {
-    setExercise('');
-    setExerciseFrequency('');
-    setDiet('');
-    setOutsideFood('');
-    setEducation('');
-    setProfession('');
-    setAlcohol('');
-    setSmoke('');
-    setHypertension('');
-    setDiabetes('');
-    setCholesterol('');
-    setIrregularHeartbeat('');
-    setSnoring('');
-    setOtherCondition('');
-    setBpCheckFrequency('');
-    setContraceptives('');
-    setHormoneTherapy('');
-    setPregnancyHypertension('');
-    setFamilyHistory('');
-    setDependents('');
-    setInsurance('');
-    setThyroidDisease(false);
-    setHeartDisease(false);
-    setAsthma(false);
-    setMigraine(false);
-    setSymptoms([]);
-  };
+  setExercise('');
+  setExerciseFrequency('');
+  setDiet('');
+  setOutsideFood('');
+  setEducation('');
+  setProfession('');
+  setAlcohol('');
+  setSmoke('');
+  setHypertension('');
+  setDiabetes('');
+  setCholesterol('');
+  setIrregularHeartbeat('');
+  setSnoring('');
+  setOtherCondition('');
+  setBpCheckFrequency('');
+  setContraceptives('');
+  setHormoneTherapy('');
+  setPregnancyHypertension('');
+  setFamilyHistory('');
+  setDependents('');
+  setInsurance('');
+  setThyroidDisease(false);
+  setHeartDisease(false);
+  setAsthma(false);
+  setMigraine(false);
+  setSymptoms([]);
+  setSaveStatus('');
+};
 
   const toggleSymptom = (symptom) => {
     setSymptoms(prev => 
@@ -137,28 +181,91 @@ const MiddlemanDashboard = () => {
     );
   };
 
-  const handleSave = () => {
+  const calculateRiskScore = () => {
+    let score = 0;
+    const ageNum = parseInt(selectedPatient?.age) || 0;
+
+    // Use the individual state variables instead of nested objects
+    if (smoke === 'yes') score += 1;
+    if (hypertension === 'yes') score += 4;
+    if (ageNum > 60) score += 1;
+    if (alcohol === 'yes') score += 1;
+    if (irregularHeartbeat === 'yes') score += 4;
+    if (diabetes === 'yes') score += 2;
+    if (familyHistory === 'yes') score += 1;
+    if (exercise === 'no') score += 1;
+    if (symptoms.length >= 2) score += 1;
+    if (heartDisease) score += 1;
+    if (thyroidDisease) score += 1;
+
+    let category = '';
+    let recommendationText = '';
+
+    if (score <= 3) {
+      category = 'Low';
+      recommendationText = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups.';
+    } else if (score >= 4 && score <= 7) {
+      category = 'Moderate';
+      recommendationText = 'Moderate risk detected. Consider dietary modifications, regular exercise, and follow-up with your physician.';
+    } else {
+      category = 'High';
+      recommendationText = 'High risk detected. Immediate consultation with a healthcare provider is recommended.';
+      setShowDoctorReferral(true);
+    }
+
+    return { score, category, tips: recommendationText };
+  };
+
+  const validateForm = () => {
+    // Basic validation - can be enhanced
+    if (!selectedPatient) {
+      alert('Please select a patient first');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
     setSaveStatus('saving');
-    
+
     // Simulate API call
     setTimeout(() => {
-      // Update patient status
-      setPatients(prev => prev.map(p => 
-        p.tokenNumber === selectedPatient.tokenNumber 
-          ? { ...p, status: 'Complete', lastUpdated: new Date().toISOString().split('T')[0] }
-          : p
-      ));
-      
       setSaveStatus('success');
+
+      // Update patient status to 'In Progress'
+      setPatients(prev => prev.map(patient => 
+        patient.tokenNumber === selectedPatient.tokenNumber 
+          ? { ...patient, status: 'In Progress', lastUpdated: new Date().toISOString().split('T')[0] }
+          : patient
+      ));
+
       setTimeout(() => setSaveStatus(''), 3000);
-    }, 1500);
+    }, 1000);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    const { score, category, tips } = calculateRiskScore();
+
+    // Set results and show modal
+    setResults({
+      modalVisible: true,
+      riskScore: score,
+      riskCategory: category,
+      recommendations: tips
+    });
+
+    console.log('Assessment completed for:', selectedPatient.tokenNumber);
   };
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'Complete': return 'text-green-600 bg-green-100';
       case 'In Progress': return 'text-blue-600 bg-blue-100';
-      case 'Pending': return 'text-red-600 bg-red-100';
+      case 'Pending': return 'text-red-500 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -217,8 +324,31 @@ const MiddlemanDashboard = () => {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Middleman Portal</span>
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
+                <User className="w-4 h-4 text-black" />
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* People Count Dashboard - Add this after the header section */}
+        <div className="mb-8 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+          <h2 className="text-2xl font-bold text-black mb-4 text-center">Assessment Statistics</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-blue-500 backdrop-blur-sm rounded-xl p-4 text-center border border-blue-400/30">
+              <div className="text-2xl font-bold text-white">{peopleCount.totalAssessed}</div>
+              <div className="text-blue-700 text-sm font-medium">Total Assessed</div>
+            </div>
+            <div className="bg-yellow-500 backdrop-blur-sm rounded-xl p-4 text-center border border-yellow-400/30">
+              <div className="text-2xl font-bold text-white">{peopleCount.pendingReview}</div>
+              <div className="text-yellow-700 text-sm font-medium">Pending Review</div>
+            </div>
+            <div className="bg-green-500 backdrop-blur-sm rounded-xl p-4 text-center border border-green-400/30">
+              <div className="text-2xl font-bold text-white">{peopleCount.completed}</div>
+              <div className="text-green-700 text-sm font-medium">Completed</div>
+            </div>
+            <div className="bg-red-500 backdrop-blur-sm rounded-xl p-4 text-center border border-red-400/30">
+              <div className="text-2xl font-bold text-white">{peopleCount.highRiskPatients}</div>
+              <div className="text-red-700 text-sm font-medium">High Risk</div>
             </div>
           </div>
         </div>
@@ -616,7 +746,128 @@ const MiddlemanDashboard = () => {
                       onToggle={toggleSymptom}
                     />
                   </div>
+
+                  {/* Submit Button - Add this after the Symptoms section */}
+                  <div className="bg-white rounded-lg shadow-sm p-6">
+                    <button
+                      onClick={handleSubmit}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-lg transition-colors"
+                    >
+                      Calculate Risk Assessment
+                    </button>
+                  </div>
+
                 </div>
+                {/* Enhanced Results Modal - Add this before the closing </div> of the component */}
+                {results.modalVisible && (
+                  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                      <div className="p-8">
+                        <div className="text-center mb-6">
+                          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                            results.riskCategory === 'Low' ? 'bg-green-300 text-green-700' :
+                            results.riskCategory === 'Moderate' ? 'bg-yellow-300 text-yellow-700' :
+                            'bg-red-100 text-red-600'
+                          }`}>
+                            {results.riskCategory === 'Low' ? '✓' : 
+                             results.riskCategory === 'Moderate' ? '⚠' : '⚠'}
+                          </div>
+                          <h2 className="text-3xl font-bold text-gray-800 mb-2">Assessment Complete</h2>
+                          <div className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
+                            results.riskCategory === 'Low' ? 'bg-green-100 text-green-800' :
+                            results.riskCategory === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {results.riskCategory} Risk Level
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-3">Risk Score: {results.riskScore}</h3>
+                          <p className="text-gray-600 leading-relaxed">{results.recommendations}</p>
+                        </div>
+                        
+                        {showDoctorReferral && (
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+                            <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center gap-2">
+                              <AlertTriangle className="w-5 h-5" />
+                              Doctor Referral Recommended
+                            </h3>
+                            <p className="text-red-700 mb-4">
+                              Based on your assessment, we strongly recommend consulting with a healthcare provider immediately.
+                            </p>
+                            <button
+                              onClick={() => {
+                                // Simulate doctor referral
+                                alert('Patient flagged for doctor consultation. Referral sent to medical team.');
+                                setPeopleCount(prev => ({
+                                  ...prev,
+                                  pendingReview: prev.pendingReview - 1,
+                                  completed: prev.completed + 1
+                                }));
+                                setShowDoctorReferral(false);
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300 flex items-center gap-2"
+                            >
+                              <Heart className="w-4 h-4" />
+                              Forward to Doctor
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex gap-4">
+                          <button
+                            onClick={() => {
+                              setResults({ ...results, modalVisible: false });
+                              if (!showDoctorReferral && results.riskCategory !== 'High') {
+                                // Auto-complete for low/moderate risk
+                                setPeopleCount(prev => ({
+                                  ...prev,
+                                  pendingReview: Math.max(0, prev.pendingReview - 1)
+                                }));
+                              }
+                            }}
+                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300"
+                          >
+                            Close
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Reset form for new assessment
+                              setPersonalInfo({
+                                name: '', age: '', gender: '', email: '', maritalStatus: '', locality: '', durationOfStay: ''
+                              });
+                              setVitals({
+                                bloodPressure: '', pulse: '', weight: '', height: '', bmi: ''
+                              });
+                              setLifestyle({
+                                exercise: '', exerciseFrequency: '', diet: '', outsideFood: '', education: '', profession: '', alcohol: '', smoke: ''
+                              });
+                              setMedicalHistory({
+                                hypertension: '', diabetes: '', cholesterol: '', irregularHeartbeat: '', snoring: '', otherCondition: '', bpCheckFrequency: '', contraceptives: '', hormoneTherapy: '', pregnancyHypertension: ''
+                              });
+                              setFamilyhistory({
+                                familyHistory: '', dependents: '', insurance: ''
+                              });
+                              setPastConditions({
+                                thyroidDisease: false, heartDisease: false, asthma: false, migraine: false
+                              });
+                              setTiaData({
+                                tiaHistory: '', tiaFrequency: '', tiaSymptoms: [], lastTiaOccurrence: ''
+                              });
+                              setSymptoms([]);
+                              setResults({ modalVisible: false, riskScore: 0, riskCategory: '', recommendations: '' });
+                              setShowDoctorReferral(false);
+                            }}
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300"
+                          >
+                            New Assessment
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">

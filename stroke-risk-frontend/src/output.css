@@ -1,4 +1,4 @@
-/*! tailwindcss v4.1.9 | MIT License | https://tailwindcss.com */
+/*! tailwindcss v4.1.10 | MIT License | https://tailwindcss.com */
 @layer properties;
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -61,11 +61,17 @@ button:focus, button:focus-visible {
 .absolute {
   position: absolute;
 }
+.fixed {
+  position: fixed;
+}
 .relative {
   position: relative;
 }
 .top-1\/2 {
   top: calc(1/2 * 100%);
+}
+.z-50 {
+  z-index: 50;
 }
 .container {
   width: 100%;
@@ -82,11 +88,20 @@ button:focus, button:focus-visible {
 .grid {
   display: grid;
 }
+.inline-block {
+  display: inline-block;
+}
+.inline-flex {
+  display: inline-flex;
+}
 .h-full {
   height: 100%;
 }
 .h-screen {
   height: 100vh;
+}
+.max-h-\[90vh\] {
+  max-height: 90vh;
 }
 .min-h-screen {
   min-height: 100vh;
@@ -116,17 +131,11 @@ button:focus, button:focus-visible {
 .resize {
   resize: both;
 }
-.resize-none {
-  resize: none;
-}
 .grid-cols-1 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 .grid-cols-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.flex-col {
-  flex-direction: column;
 }
 .flex-wrap {
   flex-wrap: wrap;
@@ -134,29 +143,11 @@ button:focus, button:focus-visible {
 .items-center {
   align-items: center;
 }
-.items-end {
-  align-items: flex-end;
-}
 .justify-between {
   justify-content: space-between;
 }
 .justify-center {
   justify-content: center;
-}
-.justify-end {
-  justify-content: flex-end;
-}
-.divide-y {
-  :where(& > :not(:last-child)) {
-    --tw-divide-y-reverse: 0;
-    border-bottom-style: var(--tw-border-style);
-    border-top-style: var(--tw-border-style);
-    border-top-width: calc(1px * var(--tw-divide-y-reverse));
-    border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
-  }
-}
-.overflow-hidden {
-  overflow: hidden;
 }
 .overflow-y-auto {
   overflow-y: auto;
@@ -168,14 +159,6 @@ button:focus, button:focus-visible {
   border-style: var(--tw-border-style);
   border-width: 1px;
 }
-.border-2 {
-  border-style: var(--tw-border-style);
-  border-width: 2px;
-}
-.border-4 {
-  border-style: var(--tw-border-style);
-  border-width: 4px;
-}
 .border-t {
   border-top-style: var(--tw-border-style);
   border-top-width: 1px;
@@ -184,30 +167,12 @@ button:focus, button:focus-visible {
   border-right-style: var(--tw-border-style);
   border-right-width: 1px;
 }
-.border-r-4 {
-  border-right-style: var(--tw-border-style);
-  border-right-width: 4px;
-}
 .border-b {
   border-bottom-style: var(--tw-border-style);
   border-bottom-width: 1px;
 }
-.bg-gradient-to-br {
-  --tw-gradient-position: to bottom right in oklab;
-  background-image: linear-gradient(var(--tw-gradient-stops));
-}
-.bg-gradient-to-r {
-  --tw-gradient-position: to right in oklab;
-  background-image: linear-gradient(var(--tw-gradient-stops));
-}
-.bg-clip-text {
-  background-clip: text;
-}
 .text-center {
   text-align: center;
-}
-.text-transparent {
-  color: transparent;
 }
 .uppercase {
   text-transform: uppercase;
@@ -228,33 +193,14 @@ button:focus, button:focus-visible {
   transition-timing-function: var(--tw-ease, ease);
   transition-duration: var(--tw-duration, 0s);
 }
-.transition-all {
-  transition-property: all;
-  transition-timing-function: var(--tw-ease, ease);
-  transition-duration: var(--tw-duration, 0s);
-}
 .transition-colors {
   transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
   transition-timing-function: var(--tw-ease, ease);
   transition-duration: var(--tw-duration, 0s);
 }
-.duration-200 {
-  --tw-duration: 200ms;
-  transition-duration: 200ms;
-}
-.duration-500 {
-  --tw-duration: 500ms;
-  transition-duration: 500ms;
-}
-.hover\:scale-105 {
-  &:hover {
-    @media (hover: hover) {
-      --tw-scale-x: 105%;
-      --tw-scale-y: 105%;
-      --tw-scale-z: 105%;
-      scale: var(--tw-scale-x) var(--tw-scale-y);
-    }
-  }
+.duration-300 {
+  --tw-duration: 300ms;
+  transition-duration: 300ms;
 }
 .focus\:border-transparent {
   &:focus {
@@ -301,11 +247,6 @@ button:focus, button:focus-visible {
 @property --tw-skew-y {
   syntax: "*";
   inherits: false;
-}
-@property --tw-divide-y-reverse {
-  syntax: "*";
-  inherits: false;
-  initial-value: 0;
 }
 @property --tw-border-style {
   syntax: "*";
@@ -410,21 +351,6 @@ button:focus, button:focus-visible {
   syntax: "*";
   inherits: false;
 }
-@property --tw-scale-x {
-  syntax: "*";
-  inherits: false;
-  initial-value: 1;
-}
-@property --tw-scale-y {
-  syntax: "*";
-  inherits: false;
-  initial-value: 1;
-}
-@property --tw-scale-z {
-  syntax: "*";
-  inherits: false;
-  initial-value: 1;
-}
 @property --tw-shadow {
   syntax: "*";
   inherits: false;
@@ -501,7 +427,6 @@ button:focus, button:focus-visible {
       --tw-rotate-z: initial;
       --tw-skew-x: initial;
       --tw-skew-y: initial;
-      --tw-divide-y-reverse: 0;
       --tw-border-style: solid;
       --tw-outline-style: solid;
       --tw-blur: initial;
@@ -527,9 +452,6 @@ button:focus, button:focus-visible {
       --tw-backdrop-saturate: initial;
       --tw-backdrop-sepia: initial;
       --tw-duration: initial;
-      --tw-scale-x: 1;
-      --tw-scale-y: 1;
-      --tw-scale-z: 1;
       --tw-shadow: 0 0 #0000;
       --tw-shadow-color: initial;
       --tw-shadow-alpha: 100%;
