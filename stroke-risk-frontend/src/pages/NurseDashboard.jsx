@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import logo from '../components/logo1.png';  // Adjust if path differs
+import logo from '../components/logo1.png';
 import './NurseDashboard.css';
 import { db } from "../firebase/firebase";
 import { collection, addDoc, Timestamp, query, orderBy, getDocs, deleteDoc, doc } from "firebase/firestore";
@@ -10,9 +10,13 @@ const NurseDashboard = () => {
   const navigate = useNavigate();
 
   const [patientData, setPatientData] = useState({
-    name: '', age: '', locality: '', phone: '',
+    name: '', age: '', locality: '', phone: '', email: '', aqi: '',
+    weight: '', height: '', bmi: '', waist: '',
+    hdl: '', ldl: '',
     cbp: '', crp: '', rbs: '', hba1c: '',
-    cholesterol: '', tg: '', homocysteine: '', lipoprotein: ''
+    cholesterol: '', tg: '', homocysteine: '', lipoprotein: '',
+    bloodPressure: '',
+    onBloodThinner: false
   });
 
   const [recentPatients, setRecentPatients] = useState([]);
@@ -24,38 +28,66 @@ const NurseDashboard = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setPatientData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+
+    let updatedData = { ...patientData, [name]: newValue };
+
+    if (name === 'weight' || name === 'height') {
+      const weight = parseFloat(name === 'weight' ? value : updatedData.weight);
+      const height = parseFloat(name === 'height' ? value : updatedData.height);
+
+      if (weight > 0 && height > 0) {
+        const heightInMeters = height / 100;
+        const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(2);
+        const waist = (0.45 * height).toFixed(1);
+        updatedData.bmi = bmi;
+        updatedData.waist = waist;
+      }
+    }
+
+    setPatientData(updatedData);
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const token = `PAT${Date.now()}`;  // Generates a unique token using timestamp
-  const defaultStatus = "Pending";   // Initial status for middleman
+    // Validate Blood Pressure format (e.g., 120/80)
+    const bpPattern = /^\d{2,3}\/\d{2,3}$/;
+    if (!bpPattern.test(patientData.bloodPressure)) {
+      alert("Please enter valid blood pressure in the format systolic/diastolic (e.g., 120/80).");
+      return;
+    }
 
-  try {
-    await addDoc(collection(db, "patients"), {
-      ...patientData,
-      tokenNumber: token,
-      status: defaultStatus,
-      createdAt: Timestamp.now()
-    });
+    const token = `PAT${Date.now()}`;
+    const defaultStatus = "Pending";
 
-    alert("Patient added!");
+    try {
+      await addDoc(collection(db, "patients"), {
+        ...patientData,
+        tokenNumber: token,
+        status: defaultStatus,
+        createdAt: Timestamp.now()
+      });
 
-    setPatientData({
-      name: '', age: '', locality: '', phone: '',
-      cbp: '', crp: '', rbs: '', hba1c: '',
-      cholesterol: '', tg: '', homocysteine: '', lipoprotein: ''
-    });
+      alert("Patient added!");
 
-    fetchRecentPatients();
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Failed to save patient.");
-  }
-};
+      setPatientData({
+        name: '', age: '', locality: '', phone: '', email: '', aqi: '',
+        weight: '', height: '', bmi: '', waist: '',
+        hdl: '', ldl: '',
+        cbp: '', crp: '', rbs: '', hba1c: '',
+        cholesterol: '', tg: '', homocysteine: '', lipoprotein: '',
+        bloodPressure: '',
+        onBloodThinner: false
+      });
+
+      fetchRecentPatients();
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to save patient.");
+    }
+  };
 
   const fetchRecentPatients = async () => {
     const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
@@ -88,7 +120,6 @@ const NurseDashboard = () => {
 
   return (
     <>
-      {/* Navbar */}
       <div className="navbar">
         <div className="nav-left">
           <img src={logo} alt="Logo" className="nav-logo" />
@@ -98,7 +129,6 @@ const NurseDashboard = () => {
       </div>
 
       <div className="dashboard-container">
-        {/* Sidebar */}
         <div className="sidebar">
           <h1 className="sidebar-title">Recently Added</h1>
           {recentPatients.map(patient => (
@@ -114,10 +144,18 @@ const NurseDashboard = () => {
                   </button>
                 </div>
               </div>
-
               {expandedId === patient.id && (
                 <div className="card-expanded-info">
+                  <p><strong>Email:</strong> {patient.email}</p>
+                  <p><strong>AQI:</strong> {patient.aqi}</p>
                   <p><strong>Locality:</strong> {patient.locality}</p>
+                  <p><strong>Weight:</strong> {patient.weight} kg</p>
+                  <p><strong>Height:</strong> {patient.height} cm</p>
+                  <p><strong>BMI:</strong> {patient.bmi}</p>
+                  <p><strong>Waist Circumference:</strong> {patient.waist} cm</p>
+                  <p><strong>Blood Pressure:</strong> {patient.bloodPressure}</p>
+                  <p><strong>HDL:</strong> {patient.hdl}</p>
+                  <p><strong>LDL:</strong> {patient.ldl}</p>
                   <p><strong>CBP:</strong> {patient.cbp}</p>
                   <p><strong>CRP:</strong> {patient.crp}</p>
                   <p><strong>RBS:</strong> {patient.rbs}</p>
@@ -126,13 +164,13 @@ const NurseDashboard = () => {
                   <p><strong>TG:</strong> {patient.tg}</p>
                   <p><strong>Homocysteine:</strong> {patient.homocysteine}</p>
                   <p><strong>Lipoprotein A:</strong> {patient.lipoprotein}</p>
+                  <p><strong>Blood Thinner:</strong> {patient.onBloodThinner ? 'Yes' : 'No'}</p>
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        {/* Main Content */}
         <div className="main-content">
           <h2 className="section-title">Add Patient</h2>
           <form onSubmit={handleSubmit} className="patient-form">
@@ -144,26 +182,58 @@ const NurseDashboard = () => {
               <input type="text" name="locality" placeholder="Locality" value={patientData.locality} onChange={handleChange} required />
               <input type="tel" name="phone" placeholder="Phone Number" pattern="[0-9]{10}" value={patientData.phone} onChange={handleChange} required />
             </div>
+            <div className="input-group">
+              <input type="email" name="email" placeholder="Email ID" value={patientData.email} onChange={handleChange} required />
+              <input type="text" name="aqi" placeholder="AQI (Manual)" value={patientData.aqi} onChange={handleChange} />
+            </div>
+            <div className="input-group">
+              <input type="number" name="weight" placeholder="Weight (kg)" value={patientData.weight} onChange={handleChange} />
+              <input type="number" name="height" placeholder="Height (cm)" value={patientData.height} onChange={handleChange} />
+            </div>
+            <div className="input-group">
+              <input type="text" name="bmi" placeholder="BMI (auto)" value={patientData.bmi} disabled />
+              <input type="text" name="waist" placeholder="Waist Circumference (auto)" value={patientData.waist} disabled />
+            </div>
+            <div className="input-group">
+              <input type="text" name="hdl" placeholder="HDL" value={patientData.hdl} onChange={handleChange} />
+              <input type="text" name="ldl" placeholder="LDL" value={patientData.ldl} onChange={handleChange} />
+            </div>
 
             <h3 className="section-title">Test Results</h3>
             <div className="input-group">
+              <input type="text" name="bloodPressure" placeholder="Blood Pressure (e.g. 120/80)" value={patientData.bloodPressure} onChange={handleChange} required />
               <input type="text" name="cbp" placeholder="CBP" value={patientData.cbp} onChange={handleChange} />
+            </div>
+            <div className="input-group">
               <input type="text" name="crp" placeholder="CRP" value={patientData.crp} onChange={handleChange} />
-            </div>
-            <div className="input-group">
               <input type="text" name="rbs" placeholder="RBS" value={patientData.rbs} onChange={handleChange} />
+            </div>
+            <div className="input-group">
               <input type="text" name="hba1c" placeholder="HbA1c" value={patientData.hba1c} onChange={handleChange} />
-            </div>
-            <div className="input-group">
               <input type="text" name="cholesterol" placeholder="Cholesterol" value={patientData.cholesterol} onChange={handleChange} />
-              <input type="text" name="tg" placeholder="TG" value={patientData.tg} onChange={handleChange} />
             </div>
             <div className="input-group">
+              <input type="text" name="tg" placeholder="TG" value={patientData.tg} onChange={handleChange} />
               <input type="text" name="homocysteine" placeholder="Homocysteine" value={patientData.homocysteine} onChange={handleChange} />
+            </div>
+            <div className="input-group">
               <input type="text" name="lipoprotein" placeholder="Lipoprotein A" value={patientData.lipoprotein} onChange={handleChange} />
             </div>
 
-            <button type="submit" className="submit-button">Submit</button>
+            <div className="checkbox-group">
+  <input
+    type="checkbox"
+    name="onBloodThinner"
+    checked={patientData.onBloodThinner}
+    onChange={handleChange}
+  />
+  <label htmlFor="onBloodThinner">On Blood Thinner</label>
+</div>
+
+
+            <div className="submit-wrapper">
+  <button type="submit" className="submit-button">Submit</button>
+</div>
           </form>
         </div>
       </div>

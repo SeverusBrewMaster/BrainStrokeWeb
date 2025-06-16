@@ -192,3 +192,7 @@
 .submit-button:hover {
   background-color: #218838;
 }
+.submit-wrapper {
+  display: flex;
+  justify-content: center;
+}
