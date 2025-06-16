@@ -11,6 +11,7 @@ import NurseDashboard from "./pages/NurseDashboard";
 import ViewPatients from './pages/ViewPatients';
 import MiddlemanDashboard from './pages/MiddlemanDashboard';
 import AssessmentsPage from './pages/AssessmentsPage';
+import DoctorDashboard from './pages/DoctorDashboard';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/symptom" element={<Symptom />} />
           <Route path="/assessments" element={<AssessmentsPage />} />
           <Route path="/view-patients" element={<ViewPatients/>} />
+          <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
         </Routes>
       </div>
     </Router>

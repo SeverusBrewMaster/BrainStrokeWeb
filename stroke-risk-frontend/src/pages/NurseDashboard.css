@@ -37,8 +37,8 @@
   color: #555;
   cursor: pointer;
   transition: color 0.3s;
-  padding-right: 10px;     /* Add right padding */
-  font-size: 24px;   
+  padding-right: 10px;
+  font-size: 24px;
 }
 
 .profile-icon:hover {
@@ -61,7 +61,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
   overflow-y: auto;
 }
 
@@ -81,8 +81,10 @@
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease;
+  overflow: hidden; /* ✅ Prevent child from overflowing */
+  word-wrap: break-word;
 }
 
 .horizontal-card:hover {
@@ -99,6 +101,7 @@
   font-size: 14px;
   color: #333;
   margin: 5px 0;
+  word-break: break-word; /* ✅ Wrap long text */
 }
 
 .card-main-info button {
@@ -129,6 +132,12 @@
   border-radius: 6px;
   font-size: 13px;
   color: #444;
+  margin-top: 10px;
+  overflow-wrap: break-word; /* ✅ Handle long words */
+  word-break: break-word;
+  width: 100%; /* ✅ Ensures it doesn’t exceed card width */
+  max-height: 200px; /* Optional scroll if needed */
+  overflow-y: auto;
 }
 
 /* Main Content */
@@ -136,6 +145,7 @@
   flex: 1;
   padding: 40px;
   overflow-y: auto;
+  overflow-x: hidden; /* ✅ Prevent horizontal overflow */
   background-color: #ffffff;
 }
 
