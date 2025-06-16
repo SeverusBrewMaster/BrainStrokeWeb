@@ -25,6 +25,13 @@ const Login = () => {
       // Firebase login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
+      const handleSignIn = async () => {
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+          console.error('Sign in error:', error);
+        }
+      };
 
       // Fetch user data from Firestore
       const userRef = doc(db, "users", uid);

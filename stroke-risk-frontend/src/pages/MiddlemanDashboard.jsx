@@ -1,26 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Heart, FileText, Save, AlertCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { db } from "../firebase/firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  query, 
+  orderBy, 
+  serverTimestamp,
+  getDoc,
+  where
+} from "firebase/firestore";
 
 const MiddlemanDashboard = () => {
   // State for patient data
   const [patients, setPatients] = useState([]);
 
-useEffect(() => {
-  const fetchPatients = async () => {
-    const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
-    const snapshot = await getDocs(q);
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setPatients(data);
-  };
+//useEffect FOR FETCHING PATIENTS
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(),
+          // Ensure all required fields have default values
+          status: doc.data().status || 'Pending',
+          lastUpdated: doc.data().lastUpdated || new Date().toISOString().split('T')[0]
+        }));
+        setPatients(data);
 
-  fetchPatients();
-}, []);
+        // Update people count based on fetched data
+        const progressReview = data.filter(p => p.status === 'In Progress').length;
+        const pendingReview = data.filter(p => p.status === 'Pending').length;
+        const completed = data.filter(p => p.status === 'Complete').length;
+        const highRiskPatients = data.filter(p => p.riskCategory === 'High').length;
+
+        setPeopleCount({
+          progressReview,
+          pendingReview,
+          completed,
+          highRiskPatients
+        });
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+        alert("Error loading patient data. Please refresh the page.");
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
   const [searchToken, setSearchToken] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [filteredPatients, setFilteredPatients] = useState(patients);
+
+  // New risk assessment parameters
+  const [stressLevel, setStressLevel] = useState('');
+  const [sleepHours, setSleepHours] = useState('');
+  const [airPollutionAQI, setAirPollutionAQI] = useState('');
+  const [tiaHistory, setTiaHistory] = useState('');
+  const [alcoholFrequency, setAlcoholFrequency] = useState('');
+
+  // For storing patient's existing data
+  const [patientVitals, setPatientVitals] = useState({
+    age: '',
+    bmi: '',
+    bloodPressure: '',
+    ldl: '',
+    hdl: '',
+    cholesterol: ''
+  });
 
   // Medical form states
   const [exercise, setExercise] = useState('');
@@ -35,6 +88,8 @@ useEffect(() => {
   // Medical History
   const [hypertension, setHypertension] = useState('');
   const [diabetes, setDiabetes] = useState('');
+  const [rnddiabetesNum, setRnddiabetesNum] = useState('');
+  const [hba1c, setHba1c] = useState('');
   const [cholesterol, setCholesterol] = useState('');
   const [irregularHeartbeat, setIrregularHeartbeat] = useState('');
   const [snoring, setSnoring] = useState('');
@@ -62,7 +117,7 @@ useEffect(() => {
 
   // Add these state variables after the existing useState declarations
   const [peopleCount, setPeopleCount] = useState({
-    totalAssessed: 0,
+    inProgress: 0,
     pendingReview: 0,
     completed: 0,
     highRiskPatients: 0
@@ -82,7 +137,7 @@ useEffect(() => {
   });
   
   const [medicalHistory, setMedicalHistory] = useState({
-    hypertension: '', diabetes: '', cholesterol: '', irregularHeartbeat: '', snoring: '', otherCondition: '', bpCheckFrequency: '', contraceptives: '', hormoneTherapy: '', pregnancyHypertension: ''
+    hypertension: '', diabetes: '', rnddiabetesNum: '', hba1c: '', cholesterol: '', irregularHeartbeat: '', snoring: '', otherCondition: '', bpCheckFrequency: '', contraceptives: '', hormoneTherapy: '', pregnancyHypertension: ''
   });
   
   const [familyhistory, setFamilyhistory] = useState({
@@ -120,38 +175,58 @@ useEffect(() => {
 
   const handlePatientSelect = (patient) => {
     setSelectedPatient(patient);
+    
+    // Load patient's existing vital data
+    setPatientVitals({
+      age: patient.age || '',
+      bmi: patient.bmi || '',
+      bloodPressure: patient.bloodPressure || '',
+      ldl: patient.ldl || '',
+      hdl: patient.hdl || '',
+      cholesterol: patient.cholesterol || ''
+    });
+
     resetForm();
+    loadExistingAssessment(patient);
+    checkRecentAssessment(patient);
   };
 
   const resetForm = () => {
-  setExercise('');
-  setExerciseFrequency('');
-  setDiet('');
-  setOutsideFood('');
-  setEducation('');
-  setProfession('');
-  setAlcohol('');
-  setSmoke('');
-  setHypertension('');
-  setDiabetes('');
-  setCholesterol('');
-  setIrregularHeartbeat('');
-  setSnoring('');
-  setOtherCondition('');
-  setBpCheckFrequency('');
-  setContraceptives('');
-  setHormoneTherapy('');
-  setPregnancyHypertension('');
-  setFamilyHistory('');
-  setDependents('');
-  setInsurance('');
-  setThyroidDisease(false);
-  setHeartDisease(false);
-  setAsthma(false);
-  setMigraine(false);
-  setSymptoms([]);
-  setSaveStatus('');
-};
+    setExercise('');
+    setExerciseFrequency('');
+    setDiet('');
+    setOutsideFood('');
+    setEducation('');
+    setProfession('');
+    setAlcohol('');
+    setSmoke('');
+    setHypertension('');
+    setDiabetes('');
+    setRnddiabetesNum('');
+    setHba1c('');
+    setCholesterol('');
+    setIrregularHeartbeat('');
+    setSnoring('');
+    setOtherCondition('');
+    setBpCheckFrequency('');
+    setContraceptives('');
+    setHormoneTherapy('');
+    setPregnancyHypertension('');
+    setFamilyHistory('');
+    setDependents('');
+    setInsurance('');
+    setThyroidDisease(false);
+    setHeartDisease(false);
+    setAsthma(false);
+    setMigraine(false);
+    setSymptoms([]);
+    setStressLevel('');
+    setSleepHours('');
+    setAirPollutionAQI('');
+    setTiaHistory('');
+    setAlcoholFrequency('');
+    setSaveStatus('');
+  };
 
   const toggleSymptom = (symptom) => {
     setSymptoms(prev => 
@@ -161,49 +236,47 @@ useEffect(() => {
     );
   };
   
-  const PatientCard = ({ patient }) => (
-  <div className="horizontal-card">
-    <div className="card-main-info">
-      <p><strong>{patient.name}</strong> | Age: {patient.age} | Ph: {patient.phone}</p>
-    </div>
-    <div className="card-expanded-info">
-      <p><strong>Locality:</strong> {patient.locality}</p>
-      <p><strong>CBP:</strong> {patient.cbp}</p>
-      <p><strong>CRP:</strong> {patient.crp}</p>
-      <p><strong>RBS:</strong> {patient.rbs}</p>
-      <p><strong>HbA1c:</strong> {patient.hba1c}</p>
-      <p><strong>Cholesterol:</strong> {patient.cholesterol}</p>
-      <p><strong>TG:</strong> {patient.tg}</p>
-      <p><strong>Homocysteine:</strong> {patient.homocysteine}</p>
-      <p><strong>Lipoprotein A:</strong> {patient.lipoprotein}</p>
-    </div>
-  </div>
-);
-
   const calculateRiskScore = () => {
     let score = 0;
-    const ageNum = parseInt(selectedPatient?.age) || 0;
+    const ageNum = parseInt(patientVitals.age) || 0;
+    const bmiNum = parseFloat(patientVitals.bmi) || 0;
+    const stressNum = parseInt(stressLevel) || 0;
+    const sleepNum = parseInt(sleepHours) || 8;
+    const aqiNum = parseInt(airPollutionAQI) || 0;
 
-    // Use the individual state variables instead of nested objects
-    if (smoke === 'yes') score += 1;
-    if (hypertension === 'yes') score += 4;
-    if (ageNum > 60) score += 1;
-    if (alcohol === 'yes') score += 1;
-    if (irregularHeartbeat === 'yes') score += 4;
-    if (diabetes === 'yes') score += 2;
-    if (familyHistory === 'yes') score += 1;
-    if (exercise === 'no') score += 1;
-    if (symptoms.length >= 2) score += 1;
-    if (heartDisease) score += 1;
-    if (thyroidDisease) score += 1;
+    // Parse blood pressure
+    const bpParts = patientVitals.bloodPressure.split('/');
+    const systolic = parseInt(bpParts[0]) || 0;
+    const diastolic = parseInt(bpParts[1]) || 0;
+
+    // Parse cholesterol values
+    const ldlNum = parseFloat(patientVitals.ldl) || 0;
+    const hdlNum = parseFloat(patientVitals.hdl) || 0;
+    const cholesterolNum = parseFloat(patientVitals.cholesterol) || 0;
+
+    // Risk scoring based on new parameters
+    if (smoke === 'yes') score += 1; // Smoking/Tobacco consumption
+    if (systolic > 140 || diastolic > 90) score += 3; // Blood Pressure >140/90
+    if (ageNum > 60) score += 1; // Age > 60
+    if (alcoholFrequency === 'daily' || alcoholFrequency === 'multiple-daily') score += 1; // Alcohol abuse
+    if (irregularHeartbeat === 'yes') score += 2; // Atrial fibrillation
+    if (diabetes === 'yes' || rnddiabetesNum > 160 || hba1c > 6.5) score += 2; // Diabetes
+    if (cholesterolNum > 200 || ldlNum > 100 || hdlNum < 40) score += 2; // Abnormal Lipid profile
+    if (stressNum >= 3) score += 1; // High stress levels (PSS 3-4)
+    if (exercise === 'no') score += 1; // No exercise
+    if (bmiNum > 30) score += 1; // BMI >30
+    if (tiaHistory === 'yes') score += 2; // History of TIA
+    if (sleepNum < 6) score += 1; // Sleep deprivation
+    if (aqiNum > 200) score += 1; // Air pollution
+    if (familyHistory === 'yes') score += 2; // Family history
 
     let category = '';
     let recommendationText = '';
 
-    if (score <= 3) {
+    if (score <= 5) {
       category = 'Low';
       recommendationText = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups.';
-    } else if (score >= 4 && score <= 7) {
+    } else if (score >= 6 && score <= 12) {
       category = 'Moderate';
       recommendationText = 'Moderate risk detected. Consider dietary modifications, regular exercise, and follow-up with your physician.';
     } else {
@@ -224,22 +297,201 @@ useEffect(() => {
     return true;
   };
 
+  // 4. REPLACE THE handleSave FUNCTION
   const handleSave = async () => {
-    setSaveStatus('saving');
+    if (!selectedPatient) {
+    alert('Please select a patient first');
+    return;
+  }
 
-    // Simulate API call
-    setTimeout(() => {
+  // Check for recent assessments
+  const hasRecentAssessment = await checkRecentAssessment(selectedPatient);
+  if (hasRecentAssessment) {
+    return; // Stop execution if recent assessment exists
+  }
+
+  setSaveStatus('saving');
+
+    try {
+      // Prepare the data to save
+      const medicalData = {
+        patientId: selectedPatient.id,
+        tokenNumber: selectedPatient.tokenNumber,
+
+        // Patient's existing vital data
+        patientVitals: {
+          age: patientVitals.age,
+          bmi: patientVitals.bmi,
+          bloodPressure: patientVitals.bloodPressure,
+          ldl: patientVitals.ldl,
+          hdl: patientVitals.hdl,
+          cholesterol: patientVitals.cholesterol
+        },
+
+        // Personal History
+        exercise,
+        exerciseFrequency,
+        diet,
+        outsideFood,
+        education,
+        profession,
+        alcohol,
+        smoke,
+
+        // Medical History
+        hypertension,
+        diabetes,
+        hba1c,
+        cholesterol,
+        irregularHeartbeat,
+        snoring,
+        otherCondition,
+        bpCheckFrequency,
+
+        // Female-specific (if applicable)
+        ...(selectedPatient.gender === 'Female' && {
+          contraceptives,
+          hormoneTherapy,
+          pregnancyHypertension
+        }),
+
+        // Family History
+        familyHistory,
+        dependents,
+        insurance,
+
+        // Past History
+        pastConditions: {
+          thyroidDisease,
+          heartDisease,
+          asthma,
+          migraine
+        },
+
+        // Symptoms
+        symptoms,
+
+        // Risk Assessment Results (calculate before saving)
+        riskAssessment: (() => {
+          const { score, category, tips } = calculateRiskScore();
+          return {
+            riskScore: score,
+            riskCategory: category,
+            recommendations: tips,
+            assessmentDate: new Date().toISOString()
+          };
+        })(),
+
+        // Metadata
+        updatedAt: serverTimestamp(),
+        updatedBy: 'middleman', // You can replace with actual user ID
+        status: 'In Progress'
+      };
+
+      // Save to medical_assessments collection
+      await addDoc(collection(db, "medical_assessments"), medicalData);
+
+      // Update patient status
+      const patientRef = doc(db, "patients", selectedPatient.id);
+      await updateDoc(patientRef, {
+        status: 'In Progress',
+        lastUpdated: new Date().toISOString().split('T')[0],
+        updatedAt: serverTimestamp()
+      });
+
       setSaveStatus('success');
 
-      // Update patient status to 'In Progress'
+      // Update local state
       setPatients(prev => prev.map(patient => 
-        patient.tokenNumber === selectedPatient.tokenNumber 
+        patient.id === selectedPatient.id 
           ? { ...patient, status: 'In Progress', lastUpdated: new Date().toISOString().split('T')[0] }
           : patient
       ));
 
       setTimeout(() => setSaveStatus(''), 3000);
-    }, 1000);
+    } catch (error) {
+      console.error("Error saving data:", error);
+      setSaveStatus('error');
+      alert("Error saving data. Please try again.");
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
+  // FUNCTION TO LOAD EXISTING ASSESSMENT DATA
+  const loadExistingAssessment = async (patient) => {
+    try {
+      // Check if there's existing assessment data
+      const q = query(
+        collection(db, "medical_assessments"),
+        where("patientId", "==", patient.id)
+      );
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        // Load the most recent assessment
+        const assessmentData = snapshot.docs[0].data();
+
+        // Populate form fields with existing data
+        setExercise(assessmentData.exercise || '');
+        setExerciseFrequency(assessmentData.exerciseFrequency || '');
+        setDiet(assessmentData.diet || '');
+        setOutsideFood(assessmentData.outsideFood || '');
+        setEducation(assessmentData.education || '');
+        setProfession(assessmentData.profession || '');
+        setAlcohol(assessmentData.alcohol || '');
+        setSmoke(assessmentData.smoke || '');
+        setHypertension(assessmentData.hypertension || '');
+        setDiabetes(assessmentData.diabetes || '');
+        setRnddiabetesNum(assessmentData.rnddiabetesNum || '');
+        setHba1c(assessmentData.hba1c || '');
+        setCholesterol(assessmentData.cholesterol || '');
+        setIrregularHeartbeat(assessmentData.irregularHeartbeat || '');
+        setSnoring(assessmentData.snoring || '');
+        setOtherCondition(assessmentData.otherCondition || '');
+        setBpCheckFrequency(assessmentData.bpCheckFrequency || '');
+        setContraceptives(assessmentData.contraceptives || '');
+        setHormoneTherapy(assessmentData.hormoneTherapy || '');
+        setPregnancyHypertension(assessmentData.pregnancyHypertension || '');
+        setFamilyHistory(assessmentData.familyHistory || '');
+        setDependents(assessmentData.dependents || '');
+        setInsurance(assessmentData.insurance || '');
+
+        if (assessmentData.pastConditions) {
+          setThyroidDisease(assessmentData.pastConditions.thyroidDisease || false);
+          setHeartDisease(assessmentData.pastConditions.heartDisease || false);
+          setAsthma(assessmentData.pastConditions.asthma || false);
+          setMigraine(assessmentData.pastConditions.migraine || false);
+        }
+
+        setSymptoms(assessmentData.symptoms || []);
+      }
+    } catch (error) {
+      console.error("Error loading existing assessment:", error);
+    }
+  };
+
+  // Function to check if patient has recent assessment (within 5 minutes)
+  const checkRecentAssessment = async (patient) => {
+    try {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const q = query(
+        collection(db, "medical_assessments"),
+        where("patientId", "==", patient.id),
+        where("updatedAt", ">=", fiveMinutesAgo),
+        orderBy("updatedAt", "desc"),
+        limit(1)
+      );
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        alert(`Assessment for this patient was completed less than 5 minutes ago. Please wait before creating a new assessment.`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error checking recent assessments:", error);
+      return false;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -333,13 +585,13 @@ useEffect(() => {
         <div className="mb-8 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
           <h2 className="text-2xl font-bold text-black mb-4 text-center">Assessment Statistics</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-500 backdrop-blur-sm rounded-xl p-4 text-center border border-blue-400/30">
-              <div className="text-2xl font-bold text-white">{peopleCount.totalAssessed}</div>
-              <div className="text-blue-700 text-sm font-medium">Total Assessed</div>
-            </div>
             <div className="bg-yellow-500 backdrop-blur-sm rounded-xl p-4 text-center border border-yellow-400/30">
               <div className="text-2xl font-bold text-white">{peopleCount.pendingReview}</div>
               <div className="text-yellow-700 text-sm font-medium">Pending Review</div>
+            </div>
+            <div className="bg-blue-500 backdrop-blur-sm rounded-xl p-4 text-center border border-blue-400/30">
+              <div className="text-2xl font-bold text-white">{peopleCount.progressReview}</div>
+              <div className="text-blue-700 text-sm font-medium">In Progress</div>
             </div>
             <div className="bg-green-500 backdrop-blur-sm rounded-xl p-4 text-center border border-green-400/30">
               <div className="text-2xl font-bold text-white">{peopleCount.completed}</div>
@@ -409,13 +661,19 @@ useEffect(() => {
                       {saveStatus === 'saving' && (
                         <div className="flex items-center text-blue-600">
                           <Clock className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Saving...</span>
+                          <span className="text-sm">Saving to database...</span>
                         </div>
                       )}
                       {saveStatus === 'success' && (
                         <div className="flex items-center text-green-600">
                           <CheckCircle className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Saved successfully</span>
+                          <span className="text-sm">Saved to Firebase successfully</span>
+                        </div>
+                      )}
+                      {saveStatus === 'error' && (
+                        <div className="flex items-center text-red-600">
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                          <span className="text-sm">Error saving data</span>
                         </div>
                       )}
                       <button
@@ -426,6 +684,41 @@ useEffect(() => {
                         <Save className="w-4 h-4" />
                         <span>Save Data</span>
                       </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Patient Vitals Display */}
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Heart className="w-5 h-5 mr-2" />
+                    Patient Vitals (From Database)
+                  </h3>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">Age</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.age || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">BMI</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.bmi || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">Blood Pressure</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.bloodPressure || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">LDL</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.ldl || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">HDL</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.hdl || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">Cholesterol</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.cholesterol || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -512,12 +805,14 @@ useEffect(() => {
                       </div>
 
                       <RadioGroup
-                        label="Do you consume alcohol?"
-                        value={alcohol}
-                        onChange={setAlcohol}
+                        label="Alcohol consumption frequency"
+                        value={alcoholFrequency}
+                        onChange={setAlcoholFrequency}
                         options={[
-                          { value: 'yes', label: 'Yes' },
-                          { value: 'no', label: 'No' }
+                          { value: 'never', label: 'Never' },
+                          { value: 'occasional', label: 'Occasional' },
+                          { value: 'daily', label: 'Daily (1-2 drinks)' },
+                          { value: 'multiple-daily', label: 'Multiple daily (>2 drinks)' }
                         ]}
                       />
 
@@ -530,6 +825,56 @@ useEffect(() => {
                           { value: 'no', label: 'No' }
                         ]}
                       />
+
+                    </div>
+                  </div>
+
+                  {/* Additional Risk Factors */}
+                  <div className="bg-white rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <AlertCircle className="w-5 h-5 mr-2" />
+                      Additional Risk Factors
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <RadioGroup
+                        label="Stress Level (PSS Scale 0-4)"
+                        value={stressLevel}
+                        onChange={setStressLevel}
+                        options={[
+                          { value: '0', label: '0 - No stress' },
+                          { value: '1', label: '1 - Low stress' },
+                          { value: '2', label: '2 - Moderate stress' },
+                          { value: '3', label: '3 - High stress' },
+                          { value: '4', label: '4 - Very high stress' }
+                        ]}
+                      />
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Sleep hours per night</label>
+                        <input
+                          type="number"
+                          value={sleepHours}
+                          onChange={(e) => setSleepHours(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter hours (e.g., 7)"
+                          min="0"
+                          max="24"
+                        />
+                      </div>
+                      
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Air Quality Index (AQI) in your area</label>
+                        <input
+                          type="number"
+                          value={airPollutionAQI}
+                          onChange={(e) => setAirPollutionAQI(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter AQI value"
+                          min="0"
+                          max="500"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -560,6 +905,27 @@ useEffect(() => {
                           { value: 'no', label: 'No' }
                         ]}
                       />
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Random Blood Sugar</label>
+                        <input
+                          type="number"
+                          value={rnddiabetesNum}
+                          onChange={(e) => setRnddiabetesNum(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter sugar"
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">HbA1C (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={hba1c}
+                          onChange={(e) => setHba1c(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter HbA1C percentage (e.g., 6.8)"
+                        />
+                      </div>
 
                       <RadioGroup
                         label="High Cholesterol"
