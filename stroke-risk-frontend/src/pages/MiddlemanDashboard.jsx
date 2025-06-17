@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Heart, FileText, Save, AlertCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { db } from "../firebase/firebase";
 import { 
   collection, 
@@ -620,6 +621,7 @@ const handleSaveAfterAssessment = async () => {
       </div>
     </div>
   );
+  const navigate = useNavigate();
 
   const CheckboxGroup = ({ label, items, selectedItems, onToggle }) => (
     <div className="mb-6">

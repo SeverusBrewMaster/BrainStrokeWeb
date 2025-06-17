@@ -4,67 +4,29 @@ import { db } from '../firebase/firebase';
 import { FaUserCircle } from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 import logo from '../components/logo1.png';
-import './DoctorDashboard.css'; // You can rename the CSS or duplicate it
+import './DoctorDashboard.css';
 
 const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [doctorNote, setDoctorNote] = useState('');
 
+  // Fetch from "medical_assessment"
   const fetchPatients = async () => {
-  const q = query(collection(db, 'medical_assessment'), orderBy('createdAt', 'desc'));
-  const snapshot = await getDocs(q);
-  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  setPatients(data);
-};
-
+    const q = query(collection(db, 'medical_assessment'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setPatients(data);
+  };
 
   const handleLogout = () => {
     alert("Logged out!");
     window.location.href = '/';
   };
 
-  const isHighRisk = (patient) => {
-    const score = calculateRiskScore(patient).score;
-    return score > 7;
-  };
-
-  const calculateRiskScore = (patient) => {
-    let score = 0;
-    const ageNum = parseInt(patient.age) || 0;
-
-    if (patient.smoke === 'yes') score += 1;
-    if (patient.hypertension === 'yes') score += 4;
-    if (ageNum > 60) score += 1;
-    if (patient.alcohol === 'yes') score += 1;
-    if (patient.irregularHeartbeat === 'yes') score += 4;
-    if (patient.diabetes === 'yes') score += 2;
-    if (patient.familyHistory === 'yes') score += 1;
-    if (patient.exercise === 'no') score += 1;
-    if ((patient.symptoms || []).length >= 2) score += 1;
-    if (patient.heartDisease === 'yes') score += 1;
-    if (patient.thyroidDisease === 'yes') score += 1;
-
-    let category = '';
-    let recommendation = '';
-
-    if (score <= 3) {
-      category = 'Low';
-      recommendation = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups.';
-    } else if (score >= 4 && score <= 7) {
-      category = 'Moderate';
-      recommendation = 'Moderate risk detected. Consider dietary modifications, regular exercise, and follow-up with your physician.';
-    } else {
-      category = 'High';
-      recommendation = 'High risk detected. Immediate consultation with a healthcare provider is recommended.';
-    }
-
-    return { score, category, recommendation };
-  };
-
   const generatePDF = () => {
     const element = document.getElementById('report-section');
-    html2pdf().from(element).save(`${selectedPatient.name}_Report.pdf`);
+    html2pdf().from(element).save(`${selectedPatient.patientId}_Report.pdf`);
     setDoctorNote('');
   };
 
@@ -85,15 +47,20 @@ const DoctorDashboard = () => {
       <div className="dashboard-container">
         {/* Sidebar */}
         <div className="sidebar">
-          <h1 className="sidebar-title">High-Risk Patients</h1>
-          {patients.filter(isHighRisk).map(patient => (
-            <div key={patient.id} className="horizontal-card">
-              <div className="card-main-info">
-                <p><strong>{patient.name}</strong> | Age: {patient.age}</p>
-                <button onClick={() => setSelectedPatient(patient)}>View</button>
+          <h1 className="sidebar-title">Moderate & High Risk Patients</h1>
+          {patients
+            .filter(p =>
+              p.riskAssessment &&
+              (p.riskAssessment.riskCategory === 'Moderate' || p.riskAssessment.riskCategory === 'High')
+            )
+            .map(patient => (
+              <div key={patient.id} className="horizontal-card">
+                <div className="card-main-info">
+                  <p><strong>{patient.name}</strong> | Age: {patient.patientVitals?.age}</p>
+                  <button onClick={() => setSelectedPatient(patient)}>View</button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {/* Main Content */}
@@ -104,27 +71,29 @@ const DoctorDashboard = () => {
             <>
               <div id="report-section">
                 <p><strong>Name:</strong> {selectedPatient.name}</p>
-                <p><strong>Age:</strong> {selectedPatient.age}</p>
+                <p><strong>Age:</strong> {selectedPatient.patientVitals?.age}</p>
                 <p><strong>Phone:</strong> {selectedPatient.phone}</p>
-                <p><strong>CBP:</strong> {selectedPatient.cbp}</p>
-                <p><strong>CRP:</strong> {selectedPatient.crp}</p>
-                <p><strong>RBS:</strong> {selectedPatient.rbs}</p>
-                <p><strong>HbA1c:</strong> {selectedPatient.hba1c}</p>
-                <p><strong>Cholesterol:</strong> {selectedPatient.cholesterol}</p>
-                <p><strong>TG:</strong> {selectedPatient.tg}</p>
-                <p><strong>Homocysteine:</strong> {selectedPatient.homocysteine}</p>
-                <p><strong>Lipoprotein A:</strong> {selectedPatient.lipoprotein}</p>
 
-                {(() => {
-                  const { score, category, recommendation } = calculateRiskScore(selectedPatient);
-                  return (
-                    <>
-                      <p><strong>Risk Score:</strong> {score}</p>
-                      <p><strong>Category:</strong> {category}</p>
-                      <p><strong>System Recommendation:</strong> {recommendation}</p>
-                    </>
-                  );
-                })()}
+                <h3>Nurse Test Results</h3>
+                <p><strong>Blood Pressure:</strong> {selectedPatient.patientVitals?.bloodPressure}</p>
+                <p><strong>BMI:</strong> {selectedPatient.patientVitals?.bmi}</p>
+                <p><strong>HbA1c:</strong> {selectedPatient.patientVitals?.hba1c}</p>
+                <p><strong>Cholesterol:</strong> {selectedPatient.patientVitals?.cholesterol}</p>
+                <p><strong>LDL:</strong> {selectedPatient.patientVitals?.ldl}</p>
+                <p><strong>HDL:</strong> {selectedPatient.patientVitals?.hdl}</p>
+                <p><strong>Air Quality Index (AQI):</strong> {selectedPatient.patientVitals?.aqi}</p>
+
+                <h3>Reported Symptoms</h3>
+                <ul>
+                  {(selectedPatient.symptoms || []).map((symptom, index) => (
+                    <li key={index}>{symptom}</li>
+                  ))}
+                </ul>
+
+                <h3>Risk Assessment</h3>
+                <p><strong>Risk Score:</strong> {selectedPatient.riskAssessment?.riskScore}</p>
+                <p><strong>Risk Category:</strong> {selectedPatient.riskAssessment?.riskCategory}</p>
+                <p><strong>System Recommendations:</strong> {selectedPatient.riskAssessment?.recommendations}</p>
 
                 {doctorNote && (
                   <>
@@ -141,18 +110,28 @@ const DoctorDashboard = () => {
                   id="doctor-note"
                   rows="4"
                   placeholder="Write your recommendation here..."
-                  style={{ width: '100%', marginTop: '8px', padding: '10px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ccc'
+                  }}
                   value={doctorNote}
                   onChange={(e) => setDoctorNote(e.target.value)}
                 />
               </div>
 
-              <button className="submit-button" style={{ marginTop: '20px' }} onClick={generatePDF}>
+              <button
+                className="submit-button"
+                style={{ marginTop: '20px' }}
+                onClick={generatePDF}
+              >
                 Generate PDF
               </button>
             </>
           ) : (
-            <p>Select a patient to view details and generate report.</p>
+            <p>Select a patient to view their report and recommendations.</p>
           )}
         </div>
       </div>
