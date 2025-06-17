@@ -221,19 +221,19 @@ const NurseDashboard = () => {
             </div>
 
             <div className="checkbox-group">
-  <input
-    type="checkbox"
-    name="onBloodThinner"
-    checked={patientData.onBloodThinner}
-    onChange={handleChange}
-  />
-  <label htmlFor="onBloodThinner">On Blood Thinner</label>
-</div>
+              <input
+                type="checkbox"
+                name="onBloodThinner"
+                checked={patientData.onBloodThinner}
+                onChange={handleChange}
+              />
+              <label htmlFor="onBloodThinner">On Blood Thinner</label>
+            </div>
 
 
             <div className="submit-wrapper">
-  <button type="submit" className="submit-button">Submit</button>
-</div>
+              <button type="submit" className="submit-button">Submit</button>
+            </div>
           </form>
         </div>
       </div>
