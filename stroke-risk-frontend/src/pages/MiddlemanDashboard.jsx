@@ -11,7 +11,8 @@ import {
   orderBy, 
   serverTimestamp,
   getDoc,
-  where
+  where,
+  limit
 } from "firebase/firestore";
 
 const MiddlemanDashboard = () => {
@@ -20,39 +21,42 @@ const MiddlemanDashboard = () => {
 
 //useEffect FOR FETCHING PATIENTS
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ 
-          id: doc.id, 
-          ...doc.data(),
-          // Ensure all required fields have default values
-          status: doc.data().status || 'Pending',
-          lastUpdated: doc.data().lastUpdated || new Date().toISOString().split('T')[0]
-        }));
-        setPatients(data);
+  const fetchPatients = async () => {
+    try {
+      const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data(),
+        // Ensure all required fields have default values
+        status: doc.data().status || 'Pending',
+        lastUpdated: doc.data().lastUpdated || new Date().toISOString().split('T')[0]
+      }));
+      setPatients(data);
 
-        // Update people count based on fetched data
-        const progressReview = data.filter(p => p.status === 'In Progress').length;
-        const pendingReview = data.filter(p => p.status === 'Pending').length;
-        const completed = data.filter(p => p.status === 'Complete').length;
-        const highRiskPatients = data.filter(p => p.riskCategory === 'High').length;
+      // Update people count based on fetched data
+      const progressReview = data.filter(p => p.status === 'In Progress').length;
+      const pendingReview = data.filter(p => p.status === 'Pending').length;
+      const completed = data.filter(p => p.status === 'Complete').length;
+      
+      // To get high risk patients, you'd need to query the medical_assessments collection
+      // For now, we'll set it to 0 or calculate it separately
+      const highRiskPatients = 0; // This would need a separate query
 
-        setPeopleCount({
-          progressReview,
-          pendingReview,
-          completed,
-          highRiskPatients
-        });
-      } catch (error) {
-        console.error("Error fetching patients:", error);
-        alert("Error loading patient data. Please refresh the page.");
-      }
-    };
+      setPeopleCount({
+        progressReview, // CHANGE: Use progressReview instead of inProgress
+        pendingReview,
+        completed,
+        highRiskPatients
+      });
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      alert("Error loading patient data. Please refresh the page.");
+    }
+  };
 
-    fetchPatients();
-  }, []);
+  fetchPatients();
+}, []);
 
   const [searchToken, setSearchToken] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -61,13 +65,13 @@ const MiddlemanDashboard = () => {
   // New risk assessment parameters
   const [stressLevel, setStressLevel] = useState('');
   const [sleepHours, setSleepHours] = useState('');
-  const [airPollutionAQI, setAirPollutionAQI] = useState('');
   const [tiaHistory, setTiaHistory] = useState('');
   const [alcoholFrequency, setAlcoholFrequency] = useState('');
 
   // For storing patient's existing data
   const [patientVitals, setPatientVitals] = useState({
     age: '',
+    aqi: '',
     bmi: '',
     bloodPressure: '',
     ldl: '',
@@ -89,7 +93,6 @@ const MiddlemanDashboard = () => {
   const [hypertension, setHypertension] = useState('');
   const [diabetes, setDiabetes] = useState('');
   const [rnddiabetesNum, setRnddiabetesNum] = useState('');
-  const [hba1c, setHba1c] = useState('');
   const [cholesterol, setCholesterol] = useState('');
   const [irregularHeartbeat, setIrregularHeartbeat] = useState('');
   const [snoring, setSnoring] = useState('');
@@ -159,6 +162,8 @@ const MiddlemanDashboard = () => {
   const [showDoctorReferral, setShowDoctorReferral] = useState(false);
 
   const [saveStatus, setSaveStatus] = useState('');
+  
+  const [existingAssessmentId, setExistingAssessmentId] = useState(null);
 
   // Filter patients based on search
   useEffect(() => {
@@ -174,59 +179,67 @@ const MiddlemanDashboard = () => {
   }, [searchToken, patients]);
 
   const handlePatientSelect = (patient) => {
-    setSelectedPatient(patient);
-    
-    // Load patient's existing vital data
-    setPatientVitals({
-      age: patient.age || '',
-      bmi: patient.bmi || '',
-      bloodPressure: patient.bloodPressure || '',
-      ldl: patient.ldl || '',
-      hdl: patient.hdl || '',
-      cholesterol: patient.cholesterol || ''
-    });
+  setSelectedPatient(patient);
+  
+  // Load patient's existing vital data
+  setPatientVitals({
+    age: patient.age || '',
+    aqi: patient.aqi || '',
+    bmi: patient.bmi || '',
+    bloodPressure: patient.bloodPressure || '',
+    ldl: patient.ldl || '',
+    hdl: patient.hdl || '',
+    cholesterol: patient.cholesterol || '',
+    hba1c: patient.hba1c || ''  // ADD THIS LINE
+  });
 
-    resetForm();
-    loadExistingAssessment(patient);
-    checkRecentAssessment(patient);
-  };
+  // CHANGE: Load existing assessment FIRST, then reset only if no data found
+  loadExistingAssessment(patient);
+  checkRecentAssessment(patient);
+};
 
   const resetForm = () => {
-    setExercise('');
-    setExerciseFrequency('');
-    setDiet('');
-    setOutsideFood('');
-    setEducation('');
-    setProfession('');
-    setAlcohol('');
-    setSmoke('');
-    setHypertension('');
-    setDiabetes('');
-    setRnddiabetesNum('');
-    setHba1c('');
-    setCholesterol('');
-    setIrregularHeartbeat('');
-    setSnoring('');
-    setOtherCondition('');
-    setBpCheckFrequency('');
-    setContraceptives('');
-    setHormoneTherapy('');
-    setPregnancyHypertension('');
-    setFamilyHistory('');
-    setDependents('');
-    setInsurance('');
-    setThyroidDisease(false);
-    setHeartDisease(false);
-    setAsthma(false);
-    setMigraine(false);
-    setSymptoms([]);
-    setStressLevel('');
-    setSleepHours('');
-    setAirPollutionAQI('');
-    setTiaHistory('');
-    setAlcoholFrequency('');
-    setSaveStatus('');
-  };
+  console.log('Resetting form...');
+  setExercise('');
+  setExerciseFrequency('');
+  setDiet('');
+  setOutsideFood('');
+  setEducation('');
+  setProfession('');
+  setAlcohol('');
+  setSmoke('');
+  setHypertension('');
+  setDiabetes('');
+  setRnddiabetesNum('');
+  setCholesterol('');
+  setIrregularHeartbeat('');
+  setSnoring('');
+  setOtherCondition('');
+  setBpCheckFrequency('');
+  setContraceptives('');
+  setHormoneTherapy('');
+  setPregnancyHypertension('');
+  setFamilyHistory('');
+  setDependents('');
+  setInsurance('');
+  setThyroidDisease(false);
+  setHeartDisease(false);
+  setAsthma(false);
+  setMigraine(false);
+  setSymptoms([]);
+  setStressLevel('');
+  setSleepHours('');
+  setTiaHistory('');
+  setAlcoholFrequency('');
+  setSaveStatus('');
+  setExistingAssessmentId(null);
+  setResults({
+    modalVisible: false,
+    riskScore: 0,
+    riskCategory: '',
+    recommendations: ''
+  });
+};
 
   const toggleSymptom = (symptom) => {
     setSymptoms(prev => 
@@ -242,7 +255,7 @@ const MiddlemanDashboard = () => {
     const bmiNum = parseFloat(patientVitals.bmi) || 0;
     const stressNum = parseInt(stressLevel) || 0;
     const sleepNum = parseInt(sleepHours) || 8;
-    const aqiNum = parseInt(airPollutionAQI) || 0;
+    const aqiNum = parseInt(patientVitals.aqi) || 0;
 
     // Parse blood pressure
     const bpParts = patientVitals.bloodPressure.split('/');
@@ -254,13 +267,15 @@ const MiddlemanDashboard = () => {
     const hdlNum = parseFloat(patientVitals.hdl) || 0;
     const cholesterolNum = parseFloat(patientVitals.cholesterol) || 0;
 
+    const hba1cNum = parseFloat(patientVitals.hba1c) || 0;
+
     // Risk scoring based on new parameters
     if (smoke === 'yes') score += 1; // Smoking/Tobacco consumption
     if (systolic > 140 || diastolic > 90) score += 3; // Blood Pressure >140/90
     if (ageNum > 60) score += 1; // Age > 60
     if (alcoholFrequency === 'daily' || alcoholFrequency === 'multiple-daily') score += 1; // Alcohol abuse
     if (irregularHeartbeat === 'yes') score += 2; // Atrial fibrillation
-    if (diabetes === 'yes' || rnddiabetesNum > 160 || hba1c > 6.5) score += 2; // Diabetes
+    if (diabetes === 'yes' || rnddiabetesNum > 160 || hba1cNum > 6.5) score += 2; // Diabetes
     if (cholesterolNum > 200 || ldlNum > 100 || hdlNum < 40) score += 2; // Abnormal Lipid profile
     if (stressNum >= 3) score += 1; // High stress levels (PSS 3-4)
     if (exercise === 'no') score += 1; // No exercise
@@ -297,178 +312,86 @@ const MiddlemanDashboard = () => {
     return true;
   };
 
-  // 4. REPLACE THE handleSave FUNCTION
-  const handleSave = async () => {
-    if (!selectedPatient) {
-    alert('Please select a patient first');
-    return;
-  }
-
-  // Check for recent assessments
-  const hasRecentAssessment = await checkRecentAssessment(selectedPatient);
-  if (hasRecentAssessment) {
-    return; // Stop execution if recent assessment exists
-  }
-
-  setSaveStatus('saving');
-
-    try {
-      // Prepare the data to save
-      const medicalData = {
-        patientId: selectedPatient.id,
-        tokenNumber: selectedPatient.tokenNumber,
-
-        // Patient's existing vital data
-        patientVitals: {
-          age: patientVitals.age,
-          bmi: patientVitals.bmi,
-          bloodPressure: patientVitals.bloodPressure,
-          ldl: patientVitals.ldl,
-          hdl: patientVitals.hdl,
-          cholesterol: patientVitals.cholesterol
-        },
-
-        // Personal History
-        exercise,
-        exerciseFrequency,
-        diet,
-        outsideFood,
-        education,
-        profession,
-        alcohol,
-        smoke,
-
-        // Medical History
-        hypertension,
-        diabetes,
-        hba1c,
-        cholesterol,
-        irregularHeartbeat,
-        snoring,
-        otherCondition,
-        bpCheckFrequency,
-
-        // Female-specific (if applicable)
-        ...(selectedPatient.gender === 'Female' && {
-          contraceptives,
-          hormoneTherapy,
-          pregnancyHypertension
-        }),
-
-        // Family History
-        familyHistory,
-        dependents,
-        insurance,
-
-        // Past History
-        pastConditions: {
-          thyroidDisease,
-          heartDisease,
-          asthma,
-          migraine
-        },
-
-        // Symptoms
-        symptoms,
-
-        // Risk Assessment Results (calculate before saving)
-        riskAssessment: (() => {
-          const { score, category, tips } = calculateRiskScore();
-          return {
-            riskScore: score,
-            riskCategory: category,
-            recommendations: tips,
-            assessmentDate: new Date().toISOString()
-          };
-        })(),
-
-        // Metadata
-        updatedAt: serverTimestamp(),
-        updatedBy: 'middleman', // You can replace with actual user ID
-        status: 'In Progress'
-      };
-
-      // Save to medical_assessments collection
-      await addDoc(collection(db, "medical_assessments"), medicalData);
-
-      // Update patient status
-      const patientRef = doc(db, "patients", selectedPatient.id);
-      await updateDoc(patientRef, {
-        status: 'In Progress',
-        lastUpdated: new Date().toISOString().split('T')[0],
-        updatedAt: serverTimestamp()
-      });
-
-      setSaveStatus('success');
-
-      // Update local state
-      setPatients(prev => prev.map(patient => 
-        patient.id === selectedPatient.id 
-          ? { ...patient, status: 'In Progress', lastUpdated: new Date().toISOString().split('T')[0] }
-          : patient
-      ));
-
-      setTimeout(() => setSaveStatus(''), 3000);
-    } catch (error) {
-      console.error("Error saving data:", error);
-      setSaveStatus('error');
-      alert("Error saving data. Please try again.");
-      setTimeout(() => setSaveStatus(''), 3000);
-    }
-  };
-
   // FUNCTION TO LOAD EXISTING ASSESSMENT DATA
   const loadExistingAssessment = async (patient) => {
-    try {
-      // Check if there's existing assessment data
-      const q = query(
-        collection(db, "medical_assessments"),
-        where("patientId", "==", patient.id)
-      );
-      const snapshot = await getDocs(q);
+  try {
+    // Check if there's existing assessment data
+    const q = query(
+      collection(db, "medical_assessments"),
+      where("patientId", "==", patient.id),
+      orderBy("updatedAt", "desc"),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
 
-      if (!snapshot.empty) {
-        // Load the most recent assessment
-        const assessmentData = snapshot.docs[0].data();
+    if (!snapshot.empty) {
+      // Load the most recent assessment
+      const assessmentDoc = snapshot.docs[0];
+      const assessmentData = assessmentDoc.data();
 
-        // Populate form fields with existing data
-        setExercise(assessmentData.exercise || '');
-        setExerciseFrequency(assessmentData.exerciseFrequency || '');
-        setDiet(assessmentData.diet || '');
-        setOutsideFood(assessmentData.outsideFood || '');
-        setEducation(assessmentData.education || '');
-        setProfession(assessmentData.profession || '');
-        setAlcohol(assessmentData.alcohol || '');
-        setSmoke(assessmentData.smoke || '');
-        setHypertension(assessmentData.hypertension || '');
-        setDiabetes(assessmentData.diabetes || '');
-        setRnddiabetesNum(assessmentData.rnddiabetesNum || '');
-        setHba1c(assessmentData.hba1c || '');
-        setCholesterol(assessmentData.cholesterol || '');
-        setIrregularHeartbeat(assessmentData.irregularHeartbeat || '');
-        setSnoring(assessmentData.snoring || '');
-        setOtherCondition(assessmentData.otherCondition || '');
-        setBpCheckFrequency(assessmentData.bpCheckFrequency || '');
-        setContraceptives(assessmentData.contraceptives || '');
-        setHormoneTherapy(assessmentData.hormoneTherapy || '');
-        setPregnancyHypertension(assessmentData.pregnancyHypertension || '');
-        setFamilyHistory(assessmentData.familyHistory || '');
-        setDependents(assessmentData.dependents || '');
-        setInsurance(assessmentData.insurance || '');
+      // Store the existing assessment ID
+      setExistingAssessmentId(assessmentDoc.id);
 
-        if (assessmentData.pastConditions) {
-          setThyroidDisease(assessmentData.pastConditions.thyroidDisease || false);
-          setHeartDisease(assessmentData.pastConditions.heartDisease || false);
-          setAsthma(assessmentData.pastConditions.asthma || false);
-          setMigraine(assessmentData.pastConditions.migraine || false);
-        }
+      // Populate form fields with existing data
+      setExercise(assessmentData.exercise || '');
+      setExerciseFrequency(assessmentData.exerciseFrequency || '');
+      setDiet(assessmentData.diet || '');
+      setOutsideFood(assessmentData.outsideFood || '');
+      setEducation(assessmentData.education || '');
+      setProfession(assessmentData.profession || '');
+      setAlcohol(assessmentData.alcohol || '');
+      setSmoke(assessmentData.smoke || '');
+      setHypertension(assessmentData.hypertension || '');
+      setDiabetes(assessmentData.diabetes || '');
+      setRnddiabetesNum(assessmentData.rnddiabetesNum || '');
+      setCholesterol(assessmentData.cholesterol || '');
+      setIrregularHeartbeat(assessmentData.irregularHeartbeat || '');
+      setSnoring(assessmentData.snoring || '');
+      setOtherCondition(assessmentData.otherCondition || '');
+      setBpCheckFrequency(assessmentData.bpCheckFrequency || '');
+      setContraceptives(assessmentData.contraceptives || '');
+      setHormoneTherapy(assessmentData.hormoneTherapy || '');
+      setPregnancyHypertension(assessmentData.pregnancyHypertension || '');
+      setFamilyHistory(assessmentData.familyHistory || '');
+      setDependents(assessmentData.dependents || '');
+      setInsurance(assessmentData.insurance || '');
 
-        setSymptoms(assessmentData.symptoms || []);
+      // Load additional risk factors
+      setStressLevel(assessmentData.stressLevel || '');
+      setSleepHours(assessmentData.sleepHours || '');
+      setTiaHistory(assessmentData.tiaHistory || '');
+      setAlcoholFrequency(assessmentData.alcoholFrequency || '');
+
+      if (assessmentData.pastConditions) {
+        setThyroidDisease(assessmentData.pastConditions.thyroidDisease || false);
+        setHeartDisease(assessmentData.pastConditions.heartDisease || false);
+        setAsthma(assessmentData.pastConditions.asthma || false);
+        setMigraine(assessmentData.pastConditions.migraine || false);
       }
-    } catch (error) {
-      console.error("Error loading existing assessment:", error);
+
+      setSymptoms(assessmentData.symptoms || []);
+
+      // Load risk assessment results if they exist
+      if (assessmentData.riskAssessment) {
+        setResults({
+          modalVisible: false,
+          riskScore: assessmentData.riskAssessment.riskScore || 0,
+          riskCategory: assessmentData.riskAssessment.riskCategory || '',
+          recommendations: assessmentData.riskAssessment.recommendations || ''
+        });
+      }
+
+      console.log('Loaded existing assessment data for patient:', patient.tokenNumber);
+    } else {
+      // CHANGE: Only reset form when no existing data is found
+      resetForm();
+      console.log('No existing assessment found, form reset for patient:', patient.tokenNumber);
     }
-  };
+  } catch (error) {
+    console.error("Error loading existing assessment:", error);
+    resetForm(); // Reset on error
+  }
+};
 
   // Function to check if patient has recent assessment (within 5 minutes)
   const checkRecentAssessment = async (patient) => {
@@ -495,22 +418,177 @@ const MiddlemanDashboard = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  if (!validateForm()) return;
+  
+  const { score, category, tips } = calculateRiskScore();
+  
+  // First show the results modal
+  setResults({
+    modalVisible: true,
+    riskScore: score,
+    riskCategory: category,
+    recommendations: tips
+  });
 
-    if (!validateForm()) return;
+  if (category === 'High') {
+    setShowDoctorReferral(true);
+  }
+  
+  console.log('Assessment completed for:', selectedPatient.tokenNumber);
+};
 
-    const { score, category, tips } = calculateRiskScore();
+const handleSaveAfterAssessment = async () => {
+  if (!selectedPatient) {
+    alert('Please select a patient first');
+    return;
+  }
 
-    // Set results and show modal
-    setResults({
-      modalVisible: true,
-      riskScore: score,
-      riskCategory: category,
-      recommendations: tips
+  setSaveStatus('saving');
+
+  try {
+    // Prepare the data to save including risk assessment
+    const medicalData = {
+      patientId: selectedPatient.id,
+      tokenNumber: selectedPatient.tokenNumber,
+
+      // Patient's existing vital data
+      patientVitals: {
+        age: patientVitals.age,
+        aqi: patientVitals.aqi,
+        bmi: patientVitals.bmi,
+        bloodPressure: patientVitals.bloodPressure,
+        ldl: patientVitals.ldl,
+        hdl: patientVitals.hdl,
+        cholesterol: patientVitals.cholesterol,
+        hba1c: patientVitals.hba1c
+      },
+
+      // Personal History
+      exercise,
+      exerciseFrequency,
+      diet,
+      outsideFood,
+      education,
+      profession,
+      alcohol,
+      smoke,
+
+      // Medical History
+      hypertension,
+      diabetes,
+      rnddiabetesNum,
+      cholesterol,
+      irregularHeartbeat,
+      snoring,
+      otherCondition,
+      bpCheckFrequency,
+
+      // Female-specific (if applicable)
+      ...(selectedPatient.gender === 'Female' && {
+        contraceptives,
+        hormoneTherapy,
+        pregnancyHypertension
+      }),
+
+      // Family History
+      familyHistory,
+      dependents,
+      insurance,
+
+      // Additional Risk Factors
+      stressLevel,
+      sleepHours,
+      tiaHistory,
+      alcoholFrequency,
+
+      // Past History
+      pastConditions: {
+        thyroidDisease,
+        heartDisease,
+        asthma,
+        migraine
+      },
+
+      // Symptoms
+      symptoms,
+
+      // Risk Assessment Results
+      riskAssessment: {
+        riskScore: results.riskScore,
+        riskCategory: results.riskCategory,
+        recommendations: results.recommendations,
+        assessmentDate: new Date().toISOString()
+      },
+
+      // Metadata
+      updatedAt: serverTimestamp(),
+      updatedBy: 'middleman',
+      status: 'Complete'
+    };
+
+    // CHANGE: Always check for existing assessment before saving
+    if (!existingAssessmentId) {
+      // Double-check for existing assessment
+      const q = query(
+        collection(db, "medical_assessments"),
+        where("patientId", "==", selectedPatient.id),
+        orderBy("updatedAt", "desc"),
+        limit(1)
+      );
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        setExistingAssessmentId(snapshot.docs[0].id);
+      }
+    }
+
+    if (existingAssessmentId) {
+      // Update existing assessment
+      const assessmentRef = doc(db, "medical_assessments", existingAssessmentId);
+      await updateDoc(assessmentRef, medicalData);
+      console.log('Updated existing assessment:', existingAssessmentId);
+    } else {
+      // Create new assessment only if absolutely no existing record
+      const docRef = await addDoc(collection(db, "medical_assessments"), {
+        ...medicalData,
+        createdAt: serverTimestamp()
+      });
+      setExistingAssessmentId(docRef.id);
+      console.log('Created new assessment:', docRef.id);
+    }
+
+    // Update patient status to Complete
+    const patientRef = doc(db, "patients", selectedPatient.id);
+    await updateDoc(patientRef, {
+      status: 'Complete',
+      lastUpdated: new Date().toISOString().split('T')[0],
+      updatedAt: serverTimestamp()
     });
 
-    console.log('Assessment completed for:', selectedPatient.tokenNumber);
-  };
+    setSaveStatus('success');
+
+    // Update local state
+    setPatients(prev => prev.map(patient => 
+      patient.id === selectedPatient.id 
+        ? { ...patient, status: 'Complete', lastUpdated: new Date().toISOString().split('T')[0] }
+        : patient
+    ));
+
+    // Close the modal after successful save
+    setTimeout(() => {
+      setResults({ ...results, modalVisible: false });
+      setSaveStatus('');
+    }, 2000);
+
+  } catch (error) {
+    console.error("Error saving data:", error);
+    setSaveStatus('error');
+    alert("Error saving data. Please try again.");
+    setTimeout(() => setSaveStatus(''), 3000);
+  }
+};
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -562,6 +640,11 @@ const MiddlemanDashboard = () => {
     </div>
   );
 
+  const handleLogout = () => {
+    alert("Logged out!");
+    navigate('/');
+  };
+
   return (
     <>
       {/* Tailwind CSS CDN */}
@@ -575,7 +658,7 @@ const MiddlemanDashboard = () => {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Middleman Portal</span>
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-black" />
+                <User className="w-4 h-4 text-black" onClick={handleLogout} />
               </div>
             </div>
           </div>
@@ -584,7 +667,7 @@ const MiddlemanDashboard = () => {
         {/* People Count Dashboard - Add this after the header section */}
         <div className="mb-8 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
           <h2 className="text-2xl font-bold text-black mb-4 text-center">Assessment Statistics</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-yellow-500 backdrop-blur-sm rounded-xl p-4 text-center border border-yellow-400/30">
               <div className="text-2xl font-bold text-white">{peopleCount.pendingReview}</div>
               <div className="text-yellow-700 text-sm font-medium">Pending Review</div>
@@ -597,10 +680,10 @@ const MiddlemanDashboard = () => {
               <div className="text-2xl font-bold text-white">{peopleCount.completed}</div>
               <div className="text-green-700 text-sm font-medium">Completed</div>
             </div>
-            <div className="bg-red-500 backdrop-blur-sm rounded-xl p-4 text-center border border-red-400/30">
+            {/* <div className="bg-red-500 backdrop-blur-sm rounded-xl p-4 text-center border border-red-400/30">
               <div className="text-2xl font-bold text-white">{peopleCount.highRiskPatients}</div>
               <div className="text-red-700 text-sm font-medium">High Risk</div>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -657,34 +740,6 @@ const MiddlemanDashboard = () => {
                       <h2 className="text-xl font-bold text-gray-900">{selectedPatient.tokenNumber}</h2>
                       <p className="text-gray-600">{selectedPatient.name} • {selectedPatient.age} years, {selectedPatient.gender}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {saveStatus === 'saving' && (
-                        <div className="flex items-center text-blue-600">
-                          <Clock className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Saving to database...</span>
-                        </div>
-                      )}
-                      {saveStatus === 'success' && (
-                        <div className="flex items-center text-green-600">
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Saved to Firebase successfully</span>
-                        </div>
-                      )}
-                      {saveStatus === 'error' && (
-                        <div className="flex items-center text-red-600">
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          <span className="text-sm">Error saving data</span>
-                        </div>
-                      )}
-                      <button
-                        onClick={handleSave}
-                        disabled={saveStatus === 'saving'}
-                        className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-                      >
-                        <Save className="w-4 h-4" />
-                        <span>Save Data</span>
-                      </button>
-                    </div>
                   </div>
                 </div>
 
@@ -719,6 +774,14 @@ const MiddlemanDashboard = () => {
                     <div className="bg-gray-50 p-3 rounded-lg">
                       <label className="block text-sm font-medium text-gray-600">Cholesterol</label>
                       <p className="text-lg font-semibold text-gray-900">{patientVitals.cholesterol || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">HbA1c (%)</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.hba1c || 'N/A'}</p>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <label className="block text-sm font-medium text-gray-600">AQI</label>
+                      <p className="text-lg font-semibold text-gray-900">{patientVitals.aqi || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -863,18 +926,6 @@ const MiddlemanDashboard = () => {
                         />
                       </div>
                       
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Air Quality Index (AQI) in your area</label>
-                        <input
-                          type="number"
-                          value={airPollutionAQI}
-                          onChange={(e) => setAirPollutionAQI(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter AQI value"
-                          min="0"
-                          max="500"
-                        />
-                      </div>
                     </div>
                   </div>
 
@@ -913,17 +964,6 @@ const MiddlemanDashboard = () => {
                           onChange={(e) => setRnddiabetesNum(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Enter sugar"
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">HbA1C (%)</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={hba1c}
-                          onChange={(e) => setHba1c(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter HbA1C percentage (e.g., 6.8)"
                         />
                       </div>
 
@@ -1125,114 +1165,105 @@ const MiddlemanDashboard = () => {
                 </div>
                 {/* Enhanced Results Modal - Add this before the closing </div> of the component */}
                 {results.modalVisible && (
-                  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-                      <div className="p-8">
-                        <div className="text-center mb-6">
-                          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
-                            results.riskCategory === 'Low' ? 'bg-green-300 text-green-700' :
-                            results.riskCategory === 'Moderate' ? 'bg-yellow-300 text-yellow-700' :
-                            'bg-red-100 text-red-600'
-                          }`}>
-                            {results.riskCategory === 'Low' ? '✓' : 
-                             results.riskCategory === 'Moderate' ? '⚠' : '⚠'}
-                          </div>
-                          <h2 className="text-3xl font-bold text-gray-800 mb-2">Assessment Complete</h2>
-                          <div className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-                            results.riskCategory === 'Low' ? 'bg-green-100 text-green-800' :
-                            results.riskCategory === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {results.riskCategory} Risk Level
-                          </div>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div className="p-8">
+                      <div className="text-center mb-6">
+                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                          results.riskCategory === 'Low' ? 'bg-green-300 text-green-700' :
+                          results.riskCategory === 'Moderate' ? 'bg-yellow-300 text-yellow-700' :
+                          'bg-red-100 text-red-600'
+                        }`}>
+                          {results.riskCategory === 'Low' ? '✓' : 
+                           results.riskCategory === 'Moderate' ? '⚠' : '⚠'}
                         </div>
-                        
-                        <div className="bg-gray-50 rounded-xl p-6 mb-6">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-3">Risk Score: {results.riskScore}</h3>
-                          <p className="text-gray-600 leading-relaxed">{results.recommendations}</p>
+                        <h2 className="text-3xl font-bold text-gray-800 mb-2">Assessment Complete</h2>
+                        <div className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
+                          results.riskCategory === 'Low' ? 'bg-green-100 text-green-800' :
+                          results.riskCategory === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {results.riskCategory} Risk Level
                         </div>
-                        
-                        {showDoctorReferral && (
-                          <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center gap-2">
-                              <AlertTriangle className="w-5 h-5" />
-                              Doctor Referral Recommended
-                            </h3>
-                            <p className="text-red-700 mb-4">
-                              Based on your assessment, we strongly recommend consulting with a healthcare provider immediately.
-                            </p>
-                            <button
-                              onClick={() => {
-                                // Simulate doctor referral
-                                alert('Patient flagged for doctor consultation. Referral sent to medical team.');
-                                setPeopleCount(prev => ({
-                                  ...prev,
-                                  pendingReview: prev.pendingReview - 1,
-                                  completed: prev.completed + 1
-                                }));
-                                setShowDoctorReferral(false);
-                              }}
-                              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300 flex items-center gap-2"
-                            >
-                              <Heart className="w-4 h-4" />
-                              Forward to Doctor
-                            </button>
-                          </div>
-                        )}
-
-                        <div className="flex gap-4">
+                      </div>
+                      
+                      <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Risk Score: {results.riskScore}</h3>
+                        <p className="text-gray-600 leading-relaxed">{results.recommendations}</p>
+                      </div>
+                      
+                      {showDoctorReferral && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+                          <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5" />
+                            Doctor Referral Recommended
+                          </h3>
+                          <p className="text-red-700 mb-4">
+                            Based on your assessment, we strongly recommend consulting with a healthcare provider immediately.
+                          </p>
                           <button
                             onClick={() => {
-                              setResults({ ...results, modalVisible: false });
-                              if (!showDoctorReferral && results.riskCategory !== 'High') {
-                                // Auto-complete for low/moderate risk
-                                setPeopleCount(prev => ({
-                                  ...prev,
-                                  pendingReview: Math.max(0, prev.pendingReview - 1)
-                                }));
-                              }
-                            }}
-                            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300"
-                          >
-                            Close
-                          </button>
-                          <button
-                            onClick={() => {
-                              // Reset form for new assessment
-                              setPersonalInfo({
-                                name: '', age: '', gender: '', email: '', maritalStatus: '', locality: '', durationOfStay: ''
-                              });
-                              setVitals({
-                                bloodPressure: '', pulse: '', weight: '', height: '', bmi: ''
-                              });
-                              setLifestyle({
-                                exercise: '', exerciseFrequency: '', diet: '', outsideFood: '', education: '', profession: '', alcohol: '', smoke: ''
-                              });
-                              setMedicalHistory({
-                                hypertension: '', diabetes: '', cholesterol: '', irregularHeartbeat: '', snoring: '', otherCondition: '', bpCheckFrequency: '', contraceptives: '', hormoneTherapy: '', pregnancyHypertension: ''
-                              });
-                              setFamilyhistory({
-                                familyHistory: '', dependents: '', insurance: ''
-                              });
-                              setPastConditions({
-                                thyroidDisease: false, heartDisease: false, asthma: false, migraine: false
-                              });
-                              setTiaData({
-                                tiaHistory: '', tiaFrequency: '', tiaSymptoms: [], lastTiaOccurrence: ''
-                              });
-                              setSymptoms([]);
-                              setResults({ modalVisible: false, riskScore: 0, riskCategory: '', recommendations: '' });
+                              alert('Patient flagged for doctor consultation. Referral sent to medical team.');
                               setShowDoctorReferral(false);
                             }}
-                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300"
+                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300 flex items-center gap-2"
                           >
-                            New Assessment
+                            <Heart className="w-4 h-4" />
+                            Forward to Doctor
                           </button>
                         </div>
+                      )}
+
+                      {/* Save Status Display */}
+                      {saveStatus && (
+                        <div className="mb-6">
+                          {saveStatus === 'saving' && (
+                            <div className="flex items-center justify-center text-blue-600 bg-blue-50 p-4 rounded-xl">
+                              <Clock className="w-5 h-5 mr-2" />
+                              <span>Saving assessment to database...</span>
+                            </div>
+                          )}
+                          {saveStatus === 'success' && (
+                            <div className="flex items-center justify-center text-green-600 bg-green-50 p-4 rounded-xl">
+                              <CheckCircle className="w-5 h-5 mr-2" />
+                              <span>Assessment saved successfully!</span>
+                            </div>
+                          )}
+                          {saveStatus === 'error' && (
+                            <div className="flex items-center justify-center text-red-600 bg-red-50 p-4 rounded-xl">
+                              <AlertCircle className="w-5 h-5 mr-2" />
+                              <span>Error saving assessment</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex gap-4">
+                        <button
+                          onClick={() => {
+                            setResults({ ...results, modalVisible: false });
+                            setSaveStatus('');
+                          }}
+                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300"
+                        >
+                          Close Without Saving
+                        </button>
+                        
+                        {saveStatus !== 'success' && (
+                          <button
+                            onClick={handleSaveAfterAssessment}
+                            disabled={saveStatus === 'saving'}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300 flex items-center justify-center gap-2"
+                          >
+                            <Save className="w-4 h-4" />
+                            Save Assessment Data
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
