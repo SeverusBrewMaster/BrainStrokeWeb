@@ -12,11 +12,12 @@ const DoctorDashboard = () => {
   const [doctorNote, setDoctorNote] = useState('');
 
   const fetchPatients = async () => {
-    const q = query(collection(db, 'patients'), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setPatients(data);
-  };
+  const q = query(collection(db, 'medical_assessment'), orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  setPatients(data);
+};
+
 
   const handleLogout = () => {
     alert("Logged out!");
