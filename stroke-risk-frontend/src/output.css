@@ -131,11 +131,17 @@ button:focus, button:focus-visible {
 .resize {
   resize: both;
 }
+.resize-none {
+  resize: none;
+}
 .grid-cols-1 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 .grid-cols-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
 }
 .flex-wrap {
   flex-wrap: wrap;
@@ -143,11 +149,17 @@ button:focus, button:focus-visible {
 .items-center {
   align-items: center;
 }
+.items-start {
+  align-items: flex-start;
+}
 .justify-between {
   justify-content: space-between;
 }
 .justify-center {
   justify-content: center;
+}
+.overflow-auto {
+  overflow: auto;
 }
 .overflow-y-auto {
   overflow-y: auto;
@@ -158,6 +170,10 @@ button:focus, button:focus-visible {
 .border {
   border-style: var(--tw-border-style);
   border-width: 1px;
+}
+.border-2 {
+  border-style: var(--tw-border-style);
+  border-width: 2px;
 }
 .border-t {
   border-top-style: var(--tw-border-style);
@@ -171,8 +187,24 @@ button:focus, button:focus-visible {
   border-bottom-style: var(--tw-border-style);
   border-bottom-width: 1px;
 }
+.border-b-2 {
+  border-bottom-style: var(--tw-border-style);
+  border-bottom-width: 2px;
+}
+.border-transparent {
+  border-color: transparent;
+}
 .text-center {
   text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.capitalize {
+  text-transform: capitalize;
 }
 .uppercase {
   text-transform: uppercase;
@@ -193,10 +225,19 @@ button:focus, button:focus-visible {
   transition-timing-function: var(--tw-ease, ease);
   transition-duration: var(--tw-duration, 0s);
 }
+.transition-all {
+  transition-property: all;
+  transition-timing-function: var(--tw-ease, ease);
+  transition-duration: var(--tw-duration, 0s);
+}
 .transition-colors {
   transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
   transition-timing-function: var(--tw-ease, ease);
   transition-duration: var(--tw-duration, 0s);
+}
+.duration-200 {
+  --tw-duration: 200ms;
+  transition-duration: 200ms;
 }
 .duration-300 {
   --tw-duration: 300ms;
