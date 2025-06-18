@@ -276,7 +276,7 @@ const MiddlemanDashboard = () => {
     if (alcoholFrequency === 'daily' || alcoholFrequency === 'multiple-daily') score += 1; // Alcohol abuse
     if (irregularHeartbeat === 'yes') score += 2; // Atrial fibrillation
     if (diabetes === 'yes' || rnddiabetesNum > 160 || hba1cNum > 6.5) score += 2; // Diabetes
-    if (cholesterolNum > 200 || ldlNum > 100 || hdlNum < 40) score += 2; // Abnormal Lipid profile
+    if (cholesterolNum > 200 || ldlNum > 100 || hdlNum < 60) score += 2; // Abnormal Lipid profile
     if (stressNum >= 3) score += 1; // High stress levels (PSS 3-4)
     if (exercise === 'no') score += 1; // No exercise
     if (bmiNum > 30) score += 1; // BMI >30
@@ -288,10 +288,10 @@ const MiddlemanDashboard = () => {
     let category = '';
     let recommendationText = '';
 
-    if (score <= 5) {
+    if (score < 5) {
       category = 'Low';
       recommendationText = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups.';
-    } else if (score >= 6 && score <= 12) {
+    } else if (score >= 5 && score <= 8) {
       category = 'Moderate';
       recommendationText = 'Moderate risk detected. Consider dietary modifications, regular exercise, and follow-up with your physician.';
     } else {
