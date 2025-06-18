@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, User, Heart, FileText, Save, AlertCircle, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { db } from "../firebase/firebase";
 import { 
@@ -12,7 +13,8 @@ import {
   serverTimestamp,
   getDoc,
   where,
-  limit
+  limit,
+  deleteDoc
 } from "firebase/firestore";
 
 const MiddlemanDashboard = () => {
@@ -21,42 +23,31 @@ const MiddlemanDashboard = () => {
 
 //useEffect FOR FETCHING PATIENTS
   useEffect(() => {
-  const fetchPatients = async () => {
-    try {
-      const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data(),
-        // Ensure all required fields have default values
-        status: doc.data().status || 'Pending',
-        lastUpdated: doc.data().lastUpdated || new Date().toISOString().split('T')[0]
-      }));
-      setPatients(data);
+    const fetchPatients = async () => {
+      try {
+        const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(),
+          status: doc.data().status || 'Pending',
+          lastUpdated: doc.data().lastUpdated || new Date().toISOString().split('T')[0]
+        }));
+        setPatients(data);
+        calculatePeopleCount(data); // Use the new function
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+        alert("Error loading patient data. Please refresh the page.");
+      }
+    };
 
-      // Update people count based on fetched data
-      const progressReview = data.filter(p => p.status === 'In Progress').length;
-      const pendingReview = data.filter(p => p.status === 'Pending').length;
-      const completed = data.filter(p => p.status === 'Complete').length;
-      
-      // To get high risk patients, you'd need to query the medical_assessments collection
-      // For now, we'll set it to 0 or calculate it separately
-      const highRiskPatients = 0; // This would need a separate query
+    fetchPatients();
+  }, []);
 
-      setPeopleCount({
-        progressReview, // CHANGE: Use progressReview instead of inProgress
-        pendingReview,
-        completed,
-        highRiskPatients
-      });
-    } catch (error) {
-      console.error("Error fetching patients:", error);
-      alert("Error loading patient data. Please refresh the page.");
-    }
-  };
-
-  fetchPatients();
-}, []);
+  // Update counts whenever patients array changes
+  useEffect(() => {
+    calculatePeopleCount(patients);
+  }, [patients]);
 
   const [searchToken, setSearchToken] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -164,6 +155,29 @@ const MiddlemanDashboard = () => {
   const [saveStatus, setSaveStatus] = useState('');
   
   const [existingAssessmentId, setExistingAssessmentId] = useState(null);
+
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isVisible: false,
+    patientId: null,
+    patientName: '',
+    assessmentId: null
+  });
+
+  const navigate = useNavigate();
+
+  const calculatePeopleCount = (patientsList) => {
+    const progressReview = patientsList.filter(p => p.status === 'In Progress').length;
+    const pendingReview = patientsList.filter(p => p.status === 'Pending').length;
+    const completed = patientsList.filter(p => p.status === 'Complete').length;
+    const highRiskPatients = 0; // This would need a separate query
+
+    setPeopleCount({
+      progressReview,
+      pendingReview,
+      completed,
+      highRiskPatients
+    });
+  };
 
   // Filter patients based on search
   useEffect(() => {
@@ -570,11 +584,19 @@ const handleSaveAfterAssessment = async () => {
     setSaveStatus('success');
 
     // Update local state
-    setPatients(prev => prev.map(patient => 
+    const updatedPatients = patients.map(patient => 
       patient.id === selectedPatient.id 
         ? { ...patient, status: 'Complete', lastUpdated: new Date().toISOString().split('T')[0] }
         : patient
-    ));
+    );
+    setPatients(updatedPatients);
+
+    // Immediately update the selected patient as well
+    setSelectedPatient(prev => ({
+      ...prev,
+      status: 'Complete',
+      lastUpdated: new Date().toISOString().split('T')[0]
+    }));
 
     // Close the modal after successful save
     setTimeout(() => {
@@ -590,11 +612,93 @@ const handleSaveAfterAssessment = async () => {
   }
 };
 
+  const handleDeleteAssessment = async (patient) => {
+    try {
+      // First, check if there's an existing assessment
+      const q = query(
+        collection(db, "medical_assessments"),
+        where("patientId", "==", patient.id),
+        orderBy("updatedAt", "desc"),
+        limit(1)
+      );
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        alert("No medical assessment found for this patient.");
+        return;
+      }
+
+      const assessmentDoc = snapshot.docs[0];
+
+      // Show confirmation modal
+      setDeleteConfirmation({
+        isVisible: true,
+        patientId: patient.id,
+        patientName: patient.name,
+        assessmentId: assessmentDoc.id
+      });
+
+    } catch (error) {
+      console.error("Error checking for assessment:", error);
+      alert("Error checking assessment data. Please try again.");
+    }
+  };
+
+  const confirmDeleteAssessment = async () => {
+    try {
+      // Delete the medical assessment document
+      await deleteDoc(doc(db, "medical_assessments", deleteConfirmation.assessmentId));
+      
+      // Update patient status back to 'Pending' (since assessment is deleted)
+      const patientRef = doc(db, "patients", deleteConfirmation.patientId);
+      await updateDoc(patientRef, {
+        status: 'Pending',
+        lastUpdated: new Date().toISOString().split('T')[0],
+        updatedAt: serverTimestamp()
+      });
+    
+      // Update local state
+      const updatedPatients = patients.map(patient => 
+        patient.id === deleteConfirmation.patientId 
+          ? { ...patient, status: 'Pending', lastUpdated: new Date().toISOString().split('T')[0] }
+          : patient
+      );
+      setPatients(updatedPatients);
+    
+      // Update selected patient if it's the one being deleted
+      if (selectedPatient?.id === deleteConfirmation.patientId) {
+        setSelectedPatient(prev => ({
+          ...prev,
+          status: 'Pending',
+          lastUpdated: new Date().toISOString().split('T')[0]
+        }));
+        
+        // Reset form and clear existing assessment ID
+        resetForm();
+        setExistingAssessmentId(null);
+      }
+    
+      // Close confirmation modal
+      setDeleteConfirmation({
+        isVisible: false,
+        patientId: null,
+        patientName: '',
+        assessmentId: null
+      });
+    
+      alert("Medical assessment deleted successfully!");
+    
+    } catch (error) {
+      console.error("Error deleting assessment:", error);
+      alert("Error deleting assessment. Please try again.");
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Complete': return 'text-green-600 bg-green-100';
       case 'In Progress': return 'text-blue-600 bg-blue-100';
-      case 'Pending': return 'text-red-500 bg-red-100';
+      case 'Pending': return 'text-yellow-700 bg-yellow-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -641,9 +745,11 @@ const handleSaveAfterAssessment = async () => {
   );
 
   const handleLogout = () => {
-    alert("Logged out!");
+  if (window.confirm("Are you sure you want to logout?")) {
+    alert("Logged out successfully!");
     navigate('/');
-  };
+  }
+};
 
   return (
     <>
@@ -657,34 +763,38 @@ const handleSaveAfterAssessment = async () => {
             <h1 className="text-2xl font-bold text-gray-900">Medical Data Dashboard</h1>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Middleman Portal</span>
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-black" onClick={handleLogout} />
+              <div 
+                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center cursor-pointer transition-colors duration-200"
+                onClick={handleLogout}
+                title="Logout"
+              >
+                <User className="w-4 h-4 text-white" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* People Count Dashboard - Add this after the header section */}
-        <div className="mb-8 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-          <h2 className="text-2xl font-bold text-black mb-4 text-center">Assessment Statistics</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-yellow-500 backdrop-blur-sm rounded-xl p-4 text-center border border-yellow-400/30">
-              <div className="text-2xl font-bold text-white">{peopleCount.pendingReview}</div>
-              <div className="text-yellow-700 text-sm font-medium">Pending Review</div>
-            </div>
-            <div className="bg-blue-500 backdrop-blur-sm rounded-xl p-4 text-center border border-blue-400/30">
-              <div className="text-2xl font-bold text-white">{peopleCount.progressReview}</div>
-              <div className="text-blue-700 text-sm font-medium">In Progress</div>
-            </div>
-            <div className="bg-green-500 backdrop-blur-sm rounded-xl p-4 text-center border border-green-400/30">
-              <div className="text-2xl font-bold text-white">{peopleCount.completed}</div>
-              <div className="text-green-700 text-sm font-medium">Completed</div>
-            </div>
-            {/* <div className="bg-red-500 backdrop-blur-sm rounded-xl p-4 text-center border border-red-400/30">
-              <div className="text-2xl font-bold text-white">{peopleCount.highRiskPatients}</div>
-              <div className="text-red-700 text-sm font-medium">High Risk</div>
-            </div> */}
-          </div>
+        {/* Assessment Statistics */}
+        <div className="mb-6 bg-white rounded-lg px-4 py-4 border shadow-sm">
+         <div className="flex items-center justify-between">
+           <h2 className="text-xl font-semibold text-gray-800">Assessment Statistics</h2>
+           <div className="flex items-center space-x-8">
+             <div className="flex items-center bg-yellow-50 rounded-lg px-4 py-2 border border-yellow-200">
+               <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+               <span className="text-sm font-medium text-gray-700 mr-3">Pending Review:</span>
+               <div className="bg-yellow-500 text-white px-3 py-1 rounded-md font-bold text-lg">
+                 {peopleCount.pendingReview}
+               </div>
+             </div>
+             <div className="flex items-center bg-green-50 rounded-lg px-4 py-2 border border-green-200">
+               <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+               <span className="text-sm font-medium text-gray-700 mr-3">Completed:</span>
+               <div className="bg-green-500 text-white px-3 py-1 rounded-md font-bold text-lg">
+                 {peopleCount.completed}
+               </div>
+             </div>
+           </div>
+         </div>
         </div>
 
         <div className="flex h-screen" style={{height: 'calc(100vh - 80px)'}}>
@@ -739,6 +849,26 @@ const handleSaveAfterAssessment = async () => {
                     <div>
                       <h2 className="text-xl font-bold text-gray-900">{selectedPatient.tokenNumber}</h2>
                       <p className="text-gray-600">{selectedPatient.name} • {selectedPatient.age} years, {selectedPatient.gender}</p>
+                    </div>
+
+                    {/* Delete Assessment Button */}
+                    <div className="flex items-center space-x-3">
+                      <span className={`px-3 py-1 text-sm ${getStatusColor(selectedPatient.status)} rounded-full`}>
+                        {selectedPatient.status}
+                      </span>
+
+                      {selectedPatient.status === 'Complete' && (
+                        <button
+                          onClick={() => handleDeleteAssessment(selectedPatient)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                          title="Delete Medical Assessment"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                          Delete Assessment
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1259,6 +1389,63 @@ const handleSaveAfterAssessment = async () => {
                             Save Assessment Data
                           </button>
                         )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Delete Confirmation Modal */}
+              {deleteConfirmation.isVisible && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+                    <div className="p-6">
+                      <div className="text-center mb-6">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-4">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Delete Assessment</h2>
+                        <p className="text-gray-600">
+                          Are you sure you want to delete the medical assessment for{' '}
+                          <span className="font-semibold">{deleteConfirmation.patientName}</span>?
+                        </p>
+                      </div>
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                          <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L3.316 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                          </svg>
+                          <div>
+                            <h3 className="font-semibold text-yellow-800 mb-1">Warning</h3>
+                            <p className="text-sm text-yellow-700">
+                              This will permanently delete the medical assessment data. The patient's basic information will remain unchanged, but all assessment results will be lost.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+              
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setDeleteConfirmation({
+                            isVisible: false,
+                            patientId: null,
+                            patientName: '',
+                            assessmentId: null
+                          })}
+                          className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-3 rounded-xl font-semibold transition-colors duration-200"
+                        >
+                          Cancel
+                        </button>
+                        
+                        <button
+                          onClick={confirmDeleteAssessment}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-semibold transition-colors duration-200"
+                        >
+                          Delete Assessment
+                        </button>
                       </div>
                     </div>
                   </div>
