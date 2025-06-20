@@ -754,11 +754,11 @@ Visit: brainline.info`
                       { label: 'Hematocrit', value: selectedPatient.hematocrit, unit: '%', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-600' },
                       { label: 'CRP', value: selectedPatient.crp, unit: 'mg/L', bgColor: 'bg-pink-50', borderColor: 'border-pink-200', textColor: 'text-pink-600' },
                       { label: 'RBS', value: selectedPatient.rbs, unit: 'mg/dL', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-600' },
-                      { label: 'HbA1c', value: selectedPatient.hba1c, unit: '%', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-600' },
-                      { label: 'Cholesterol', value: selectedPatient.cholesterol, unit: 'mg/dL', bgColor: 'bg-teal-50', borderColor: 'border-teal-200', textColor: 'text-teal-600' },
-                      { label: 'TG', value: selectedPatient.tg, unit: 'mg/dL', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200', textColor: 'text-cyan-600' },
-                      { label: 'Homocysteine', value: selectedPatient.homocysteine, unit: 'μmol/L', bgColor: 'bg-lime-50', borderColor: 'border-lime-200', textColor: 'text-lime-600' },
-                      { label: 'Lipoprotein A', value: selectedPatient.lipoprotein, unit: 'mg/dL', bgColor: 'bg-rose-50', borderColor: 'border-rose-200', textColor: 'text-rose-600' }
+                      { label: 'HbA1c', value: selectedPatient.hba1c, unit: '%', bgColor: 'bg-red-50', borderColor: 'border-orange-200', textColor: 'text-orange-600' },
+                      { label: 'Cholesterol', value: selectedPatient.cholesterol, unit: 'mg/dL', bgColor: 'bg-purple-50', borderColor: 'border-teal-200', textColor: 'text-teal-600' },
+                      { label: 'TG', value: selectedPatient.tg, unit: 'mg/dL', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-cyan-600' },
+                      { label: 'Homocysteine', value: selectedPatient.homocysteine, unit: 'μmol/L', bgColor: 'bg-blue-50', borderColor: 'border-lime-200', textColor: 'text-lime-600' },
+                      { label: 'Lipoprotein A', value: selectedPatient.lipoprotein, unit: 'mg/dL', bgColor: 'bg-pink-50', borderColor: 'border-rose-200', textColor: 'text-rose-600' }
                     ].map((test, index) => (
                       <div key={index} className={`${test.bgColor} ${test.borderColor} border p-3 rounded-lg`}>
                         <p className={`text-sm ${test.textColor} font-medium`}>{test.label}</p>
@@ -778,9 +778,15 @@ Visit: brainline.info`
                   <div className="space-y-2">
                     {extractRiskFactors(selectedPatient, selectedAssessment).map((factor, index) => (
                       <div key={index} className="flex items-center space-x-3 p-3 bg-orange-50 border border-red-200 rounded-lg">
-                        <FaExclamationTriangle className="text-red-500 text-sm" />
-                        <span className="text-gray-800">{factor}</span>
-                      </div>
+  <svg
+    className="w-4 h-4 text-blue-600"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+  >
+    <path d="M10 5l6 10H4l6-10z" />
+  </svg>
+  <span className="text-gray-800">{factor}</span>
+</div>
                     ))}
                   </div>
                 </div>
