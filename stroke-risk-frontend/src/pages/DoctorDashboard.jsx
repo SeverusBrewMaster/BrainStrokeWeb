@@ -280,15 +280,15 @@ const generatePDF = () => {
           </div>
           <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
             <div style="font-weight: bold; margin-bottom: 4px;">RBS</div>
-            <div>${assessment.rbs || 'N/A'}</div>
+            <div>${patient.rbs || 'N/A'}</div>
           </div>
           <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
             <div style="font-weight: bold; margin-bottom: 4px;">HbA1c</div>
-            <div>${assessment.hba1c || 'N/A'}</div>
+            <div>${patient.hba1c || 'N/A'}</div>
           </div>
           <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
             <div style="font-weight: bold; margin-bottom: 4px;">Cholesterol</div>
-            <div>${assessment.cholesterol || 'N/A'}</div>
+            <div>${patient.cholesterol || 'N/A'}</div>
           </div>
           <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
             <div style="font-weight: bold; margin-bottom: 4px;">HDL/LDL</div>
@@ -753,9 +753,9 @@ Visit: brainline.info`
                       { label: 'RBC', value: selectedPatient.rbc, unit: 'M/μL', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-600' },
                       { label: 'Hematocrit', value: selectedPatient.hematocrit, unit: '%', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-600' },
                       { label: 'CRP', value: selectedPatient.crp, unit: 'mg/L', bgColor: 'bg-pink-50', borderColor: 'border-pink-200', textColor: 'text-pink-600' },
-                      { label: 'RBS', value: selectedAssessment.rbs, unit: 'mg/dL', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-600' },
-                      { label: 'HbA1c', value: selectedAssessment.hba1c, unit: '%', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-600' },
-                      { label: 'Cholesterol', value: selectedAssessment.cholesterol, unit: 'mg/dL', bgColor: 'bg-teal-50', borderColor: 'border-teal-200', textColor: 'text-teal-600' },
+                      { label: 'RBS', value: selectedPatient.rbs, unit: 'mg/dL', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-600' },
+                      { label: 'HbA1c', value: selectedPatient.hba1c, unit: '%', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-600' },
+                      { label: 'Cholesterol', value: selectedPatient.cholesterol, unit: 'mg/dL', bgColor: 'bg-teal-50', borderColor: 'border-teal-200', textColor: 'text-teal-600' },
                       { label: 'TG', value: selectedPatient.tg, unit: 'mg/dL', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200', textColor: 'text-cyan-600' },
                       { label: 'Homocysteine', value: selectedPatient.homocysteine, unit: 'μmol/L', bgColor: 'bg-lime-50', borderColor: 'border-lime-200', textColor: 'text-lime-600' },
                       { label: 'Lipoprotein A', value: selectedPatient.lipoprotein, unit: 'mg/dL', bgColor: 'bg-rose-50', borderColor: 'border-rose-200', textColor: 'text-rose-600' }
