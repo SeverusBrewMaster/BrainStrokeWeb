@@ -535,8 +535,7 @@ Visit: brainline.info`
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm text-gray-600">Dr. Smith</p>
-              <p className="text-xs text-gray-500">Cardiologist</p>
+              <p className="text-sm text-gray-600">Dr. Hande</p>
             </div>
             <FaUserCircle 
               size={40} 
