@@ -2,23 +2,99 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
 import { 
-  FaUserCircle, 
-  FaHeartbeat, 
-  FaUser, 
-  FaPhone, 
-  FaEnvelope, 
-  FaMapMarkerAlt,
-  FaClipboardList,
-  FaExclamationTriangle,
-  FaWeight,
-  FaRulerHorizontal,
-  FaFlask,
-  FaFilePdf,
-  FaWhatsapp
-} from "react-icons/fa";
+  FaUserCircle, FaHeartbeat, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaClipboardList, FaExclamationTriangle, FaWeight, FaRulerHorizontal, FaFlask, FaFilePdf, FaWhatsapp, FaTimes, FaCheckCircle,FaInfoCircle, FaExclamationCircle} from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 import logo from '../components/logo1.png';
 import './DoctorDashboard.css';
+
+// Add this Modal component after your imports
+const Modal = ({ isOpen, onClose, type = 'info', title, message, showConfirm = false, onConfirm }) => {
+  if (!isOpen) return null;
+
+  const getModalStyles = () => {
+    switch (type) {
+      case 'success':
+        return {
+          icon: <FaCheckCircle className="text-green-500 text-4xl" />,
+          borderColor: 'border-green-200',
+          bgColor: 'bg-green-50',
+          buttonColor: 'bg-green-600 hover:bg-green-700'
+        };
+      case 'error':
+        return {
+          icon: <FaExclamationCircle className="text-red-500 text-4xl" />,
+          borderColor: 'border-red-200',
+          bgColor: 'bg-red-50',
+          buttonColor: 'bg-red-600 hover:bg-red-700'
+        };
+      case 'warning':
+        return {
+          icon: <FaExclamationTriangle className="text-yellow-500 text-4xl" />,
+          borderColor: 'border-yellow-200',
+          bgColor: 'bg-yellow-50',
+          buttonColor: 'bg-yellow-600 hover:bg-yellow-700'
+        };
+      default:
+        return {
+          icon: <FaInfoCircle className="text-blue-500 text-4xl" />,
+          borderColor: 'border-blue-200',
+          bgColor: 'bg-blue-50',
+          buttonColor: 'bg-blue-600 hover:bg-blue-700'
+        };
+    }
+  };
+
+  const styles = getModalStyles();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+      <div className={`bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 border-2 ${styles.borderColor}`}>
+        <div className={`${styles.bgColor} px-6 py-4 rounded-t-xl border-b ${styles.borderColor}`}>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+            >
+              <FaTimes className="text-xl" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              {styles.icon}
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-700 text-sm leading-relaxed">{message}</p>
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 mt-6">
+            {showConfirm && (
+              <button
+                onClick={() => {
+                  onConfirm();
+                  onClose();
+                }}
+                className={`px-4 py-2 text-white font-medium rounded-lg transition-colors duration-200 ${styles.buttonColor}`}
+              >
+                Confirm
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors duration-200"
+            >
+              {showConfirm ? 'Cancel' : 'Close'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
@@ -30,6 +106,32 @@ const DoctorDashboard = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 const [generatedPDFBlob, setGeneratedPDFBlob] = useState(null);
 const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+
+  // ADD THESE NEW STATE VARIABLES FOR MODAL
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    showConfirm: false,
+    onConfirm: null
+  });
+
+  // ADD THIS HELPER FUNCTION
+  const showModal = (type, title, message, showConfirm = false, onConfirm = null) => {
+    setModalConfig({
+      isOpen: true,
+      type,
+      title,
+      message,
+      showConfirm,
+      onConfirm
+    });
+  };
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   const fetchPatientsWithAssessments = async () => {
     try {
@@ -54,9 +156,10 @@ const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
 
       setPatients(patientsWithAssessments);
     } catch (error) {
-      console.error('Error fetching patients and assessments:', error);
-      setError('Failed to fetch patient data. Please try again.');
-    } finally {
+        console.error('Error fetching patients and assessments:', error);
+        setError('Failed to fetch patient data. Please try again.');
+        showModal('error', 'Data Loading Error', 'Failed to fetch patient data. Please try again.');
+      }finally {
       setLoading(false);
     }
   };
@@ -251,15 +354,15 @@ const generatePDF = () => {
     }).catch(error => {
       console.error('PDF generation failed:', error);
       document.body.removeChild(pdfContainer);
-      alert('Failed to generate PDF. Please try again.');
+      showModal('error', 'PDF Generation Failed', 'Failed to generate PDF. Please try again.');
     });
   };
 
   const sendToWhatsApp = async () => {
-  if (!selectedPatient?.phone) {
-    alert("Phone number not available.");
-    return;
-  }
+ if (!selectedPatient?.phone) {
+  showModal('warning', 'Phone Number Missing', 'Phone number is not available for this patient.');
+  return;
+ }
 
   try {
     setIsSendingWhatsApp(true);
@@ -361,21 +464,22 @@ Visit: brainline.info`
     // You could provide instructions or implement a file sharing service
     
     setTimeout(() => {
-      alert('WhatsApp opened with message. Note: You\'ll need to manually attach the PDF file from your downloads folder.');
-    }, 1000);
+  showModal('success', 'WhatsApp Message Sent', 'WhatsApp opened with message. Note: You\'ll need to manually attach the PDF file from your downloads folder.');
+}, 1000);
     
   } catch (error) {
-    console.error('Error sending to WhatsApp:', error);
-    alert('Failed to prepare WhatsApp message. Please try again.');
-  } finally {
+  console.error('Error sending to WhatsApp:', error);
+  showModal('error', 'WhatsApp Error', 'Failed to prepare WhatsApp message. Please try again.');
+} finally {
     setIsSendingWhatsApp(false);
   }
 };
 
   const handleLogout = () => {
-    alert("Logged out!");
+  showModal('info', 'Logout Confirmation', 'Are you sure you want to logout?', true, () => {
     window.location.href = '/';
-  };
+  });
+};
 
   useEffect(() => {
     fetchPatientsWithAssessments();
@@ -748,6 +852,15 @@ Visit: brainline.info`
         </div>
       </div>
     </div>
+    <Modal
+      isOpen={modalConfig.isOpen}
+      onClose={closeModal}
+      type={modalConfig.type}
+      title={modalConfig.title}
+      message={modalConfig.message}
+      showConfirm={modalConfig.showConfirm}
+      onConfirm={modalConfig.onConfirm}
+    />
   </>
   );
 };
