@@ -16,6 +16,7 @@ import {
   limit,
   deleteDoc
 } from "firebase/firestore";
+import { FaHeartbeat, FaUserCircle } from 'react-icons/fa';
 
 const MiddlemanDashboard = () => {
   // State for patient data
@@ -757,22 +758,32 @@ const handleSaveAfterAssessment = async () => {
       <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
       
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Medical Data Dashboard</h1>
+        {/* Navigation Bar */}
+      <nav className="bg-white shadow-lg border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Middleman Portal</span>
-              <div 
-                className="w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center cursor-pointer transition-colors duration-200"
-                onClick={handleLogout}
-                title="Logout"
-              >
-                <User className="w-4 h-4 text-white" />
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <FaHeartbeat className="text-white text-xl" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">MiddleMan Dashboard</h1>
+                <p className="text-sm text-gray-500">Patient Management System</p>
               </div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              title="Logout"
+            >
+              <FaUserCircle size={24} />
+              <span className="hidden sm:block text-sm font-medium">Logout</span>
+            </button>
           </div>
         </div>
+      </nav>
 
         {/* Assessment Statistics */}
         <div className="mb-6 bg-white rounded-lg px-4 py-4 border shadow-sm">

@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
-import { FaUserCircle } from "react-icons/fa";
+import { 
+  FaUserCircle, 
+  FaHeartbeat, 
+  FaUser, 
+  FaPhone, 
+  FaEnvelope, 
+  FaMapMarkerAlt,
+  FaClipboardList,
+  FaExclamationTriangle,
+  FaWeight,
+  FaRulerHorizontal,
+  FaFlask,
+  FaFilePdf,
+  FaWhatsapp
+} from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 import logo from '../components/logo1.png';
 import './DoctorDashboard.css';
@@ -12,10 +26,16 @@ const DoctorDashboard = () => {
   const [selectedAssessment, setSelectedAssessment] = useState(null);
   const [doctorNote, setDoctorNote] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+const [generatedPDFBlob, setGeneratedPDFBlob] = useState(null);
+const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
 
   const fetchPatientsWithAssessments = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const patientsQuery = query(collection(db, 'patients'), orderBy('createdAt', 'desc'));
       const patientsSnapshot = await getDocs(patientsQuery);
       const patientsData = patientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -35,6 +55,7 @@ const DoctorDashboard = () => {
       setPatients(patientsWithAssessments);
     } catch (error) {
       console.error('Error fetching patients and assessments:', error);
+      setError('Failed to fetch patient data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -95,14 +116,128 @@ const DoctorDashboard = () => {
     setDoctorNote('');
   };
 
-  const generatePDF = () => {
-    const reportSection = document.getElementById('report-section');
+const generatePDF = () => {
+    const patient = selectedPatient;
+    const assessment = selectedAssessment;
+    const riskFactors = extractRiskFactors(patient, assessment);
+    
+    // Create a temporary container for PDF content
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
+    pdfContainer.style.fontSize = '14px'; // Increased from 12px
+    pdfContainer.style.lineHeight = '1.5'; // Increased from 1.4
+    pdfContainer.style.color = '#333';
+    pdfContainer.style.padding = '20px';
+    pdfContainer.style.backgroundColor = 'white';
+
+    const timestamp = new Date().toLocaleString();
+    
+    // Compact PDF content
+    pdfContainer.innerHTML = `
+      <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+        <h2 style="margin: 0; color: #2563eb; font-size: 22px;">Brain Stroke Risk Assessment Report</h2>
+        <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Generated on ${timestamp} | brainline.info</p>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+        <div style="width: 48%;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Patient Information</h3>
+          <table style="width: 100%; font-size: 13px;">
+            <tr><td style="padding: 3px 0;"><strong>Name:</strong></td><td>${patient.name}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Token:</strong></td><td>${patient.tokenNumber}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Age/Gender:</strong></td><td>${patient.age} / ${patient.gender}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Phone:</strong></td><td>${patient.phone}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Location:</strong></td><td>${patient.locality}</td></tr>
+          </table>
+        </div>
+
+        <div style="width: 48%;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Assessment</h3>
+          <div style="background: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#fef2f2' : '#fff7ed'}; 
+                      border: 2px solid ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'}; 
+                      padding: 15px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="font-size: 18px; font-weight: bold; color: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'};">
+              ${assessment.riskAssessment?.riskCategory || 'N/A'}
+            </div>
+            <div style="font-size: 14px; margin-top: 5px;">Risk Score: ${assessment.riskAssessment?.riskScore || 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">BP</div>
+            <div>${patient.bloodPressure}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">BMI</div>
+            <div>${patient.bmi}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">RBS</div>
+            <div>${assessment.rbs || 'N/A'}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">HbA1c</div>
+            <div>${assessment.hba1c || 'N/A'}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">Cholesterol</div>
+            <div>${assessment.cholesterol || 'N/A'}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">HDL/LDL</div>
+            <div>${patient.hdl}/${patient.ldl}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">Hemoglobin</div>
+            <div>${patient.hemoglobin || 'N/A'}</div>
+          </div>
+          <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">Platelets</div>
+            <div>${patient.platelets || 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factors</h3>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px;">
+          ${riskFactors.map(factor => `
+            <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 35px;">
+              ${factor}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Doctor's Recommendation</h3>
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
+          <div style="width: 100%;">${doctorNote || 'No specific recommendations provided at this time.'}</div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; text-align: center; font-size: 12px; color: #666;">
+        <p style="margin: 0;">Report generated by <strong>Dr. Ashok Hande</strong></p>
+        <p style="margin: 8px 0 0 0;">For queries, visit: <a href="https://brainline.info/" style="color: #2563eb;">brainline.info</a></p>
+      </div>
+    `;
+
+    // Append to body temporarily
+    document.body.appendChild(pdfContainer);
 
     const pdfOptions = {
-      margin: 10,
-      filename: `${selectedPatient.name}_BrainStroke_Report.pdf`,
+      margin: [10, 10, 10, 10],
+      filename: `${patient.name}_Stroke_Risk_Report.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        letterRendering: true
+      },
       jsPDF: {
         unit: 'mm',
         format: 'a4',
@@ -110,51 +245,132 @@ const DoctorDashboard = () => {
       }
     };
 
-    const timestamp = new Date().toLocaleString();
-    const originalHTML = reportSection.innerHTML;
-
-    const headerHTML = `
-      <div style="display: flex; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
-        <img src="${logo}" alt="Logo" style="height: 50px; margin-right: 15px;" />
-        <h2 style="text-align: center; flex: 1; margin: 0;">Brain Stroke Report</h2>
-      </div>
-      <p style="text-align: center; margin-top: 5px;">
-        <a href="https://brainline.info/" target="_blank">brainline.info/</a>
-      </p>
-    `;
-
-    const footerHTML = `
-      <hr />
-      <p style="font-size: 12px; text-align: center; color: gray;">
-        Report generated on ${timestamp} by Dr.Ashok Hande Sir
-      </p>
-    `;
-
-    const doctorNoteHTML = `
-      <h3>Doctor's Recommendation</h3>
-      <p>${doctorNote || 'No recommendation provided.'}</p>
-    `;
-
-    reportSection.innerHTML = headerHTML + reportSection.innerHTML + doctorNoteHTML + footerHTML;
-
-    html2pdf().set(pdfOptions).from(reportSection).save().then(() => {
-      reportSection.innerHTML = originalHTML;
+    html2pdf().set(pdfOptions).from(pdfContainer).save().then(() => {
+      // Clean up
+      document.body.removeChild(pdfContainer);
+    }).catch(error => {
+      console.error('PDF generation failed:', error);
+      document.body.removeChild(pdfContainer);
+      alert('Failed to generate PDF. Please try again.');
     });
   };
 
-  const sendToWhatsApp = () => {
-    if (!selectedPatient?.phone) {
-      alert("Phone number not available.");
-      return;
+  const sendToWhatsApp = async () => {
+  if (!selectedPatient?.phone) {
+    alert("Phone number not available.");
+    return;
+  }
+
+  try {
+    setIsSendingWhatsApp(true);
+    
+    let pdfBlob = generatedPDFBlob;
+    
+    // If no PDF is generated yet, generate it first
+    if (!pdfBlob && selectedPatient && selectedAssessment) {
+      // Generate PDF without showing download dialog
+      const patient = selectedPatient;
+      const assessment = selectedAssessment;
+      const riskFactors = extractRiskFactors(patient, assessment);
+      
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.fontFamily = 'Arial, sans-serif';
+      pdfContainer.style.fontSize = '14px';
+      pdfContainer.style.lineHeight = '1.5';
+      pdfContainer.style.color = '#333';
+      pdfContainer.style.padding = '20px';
+      pdfContainer.style.backgroundColor = 'white';
+      pdfContainer.style.position = 'absolute';
+      pdfContainer.style.top = '-9999px';
+      pdfContainer.style.left = '-9999px';
+      pdfContainer.style.width = '210mm';
+
+      const timestamp = new Date().toLocaleString();
+      
+      // Same PDF content as generatePDF function
+      pdfContainer.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+          <h2 style="margin: 0; color: #2563eb; font-size: 22px;">Brain Stroke Risk Assessment Report</h2>
+          <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Generated on ${timestamp} | brainline.info</p>
+        </div>
+        <!-- Add the rest of your PDF HTML content here, same as in generatePDF -->
+      `;
+
+      document.body.appendChild(pdfContainer);
+
+      const pdfOptions = {
+        margin: [10, 10, 10, 10],
+        filename: `${patient.name}_Stroke_Risk_Report.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        }
+      };
+
+      pdfBlob = await new Promise((resolve, reject) => {
+        html2pdf()
+          .set(pdfOptions)
+          .from(pdfContainer)
+          .outputPdf('blob')
+          .then((blob) => {
+            resolve(blob);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+
+      document.body.removeChild(pdfContainer);
+      setGeneratedPDFBlob(pdfBlob);
     }
 
     const phoneNumber = selectedPatient.phone.replace(/\D/g, '');
+    
+    // Enhanced message with PDF info
     const message = encodeURIComponent(
-      `Hello ${selectedPatient.name},\n\nYour brain stroke risk report has been generated.\nPlease consult further if needed.\n\n- Dr. Ashok Hande`
+      `Hello ${selectedPatient.name},
+
+Your brain stroke risk assessment report has been completed.
+
+📊 Risk Level: ${selectedAssessment?.riskAssessment?.riskCategory || 'N/A'}
+📋 Risk Score: ${selectedAssessment?.riskAssessment?.riskScore || 'N/A'}
+
+Please find your detailed medical report attached. We recommend consulting for further evaluation if needed.
+
+For any questions or to schedule a follow-up, please contact us.
+
+Best regards,
+Dr. Ashok Hande
+Visit: brainline.info`
     );
 
-    window.open(`https://wa.me/91${phoneNumber}?text=${message}`, '_blank');
-  };
+    // Open WhatsApp with message
+    const whatsappUrl = `https://wa.me/91${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+    
+    // Note: Unfortunately, WhatsApp Web doesn't support direct file uploads via URL
+    // The user will need to manually attach the PDF after the chat opens
+    // You could provide instructions or implement a file sharing service
+    
+    setTimeout(() => {
+      alert('WhatsApp opened with message. Note: You\'ll need to manually attach the PDF file from your downloads folder.');
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Error sending to WhatsApp:', error);
+    alert('Failed to prepare WhatsApp message. Please try again.');
+  } finally {
+    setIsSendingWhatsApp(false);
+  }
+};
 
   const handleLogout = () => {
     alert("Logged out!");
@@ -167,133 +383,372 @@ const DoctorDashboard = () => {
 
   const filteredPatients = patients.filter(isHighOrModerateRisk);
 
-  return (
-    <>
-      <div className="navbar">
-        <div className="nav-left">
-          <img src={logo} alt="Logo" className="nav-logo" />
-          <h2 className="nav-title">Doctor Dashboard</h2>
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">Loading patient data...</p>
         </div>
-        <FaUserCircle size={30} className="profile-icon" onClick={handleLogout} title="Logout" />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-xl shadow-lg">
+          <FaExclamationTriangle className="text-red-500 text-6xl mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchPatientsWithAssessments}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+  <>
+    {/* Tailwind CSS CDN */}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/4.0.4/colors.min.js" rel="stylesheet" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Navigation Bar */}
+      <div className="bg-white shadow-lg border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <FaHeartbeat className="text-white text-xl" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">Doctor Dashboard</h2>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <p className="text-sm text-gray-600">Dr. Smith</p>
+              <p className="text-xs text-gray-500">Cardiologist</p>
+            </div>
+            <FaUserCircle 
+              size={40} 
+              className="text-gray-600 hover:text-blue-600 cursor-pointer transition-colors duration-200" 
+              onClick={handleLogout} 
+              title="Logout" 
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="dashboard-container">
-        <div className="sidebar">
-          <h1 className="sidebar-title">High/Moderate Risk Patients</h1>
-          {filteredPatients.map(patient => {
-            const { riskScore, riskCategory } = patient.assessment?.riskAssessment || {};
-            return (
-              <div key={patient.id} className="horizontal-card">
-                <p style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '6px' }}>
-                  {patient.tokenNumber}
-                  <span className={getRiskClass(riskCategory)} style={{ marginLeft: '12px' }}>
-                    {riskCategory}
-                  </span>
-                </p>
-                <p style={{ margin: '4px 0', fontSize: '15px' }}>{patient.name}</p>
-                <p style={{ margin: '4px 0', fontSize: '14px' }}>
-                  Risk Score: <strong>{riskScore ?? 'N/A'}</strong>
-                </p>
-                <button
-                  style={{
-                    marginTop: '8px',
-                    fontSize: '13px',
-                    padding: '6px 12px',
-                    backgroundColor: '#007bff',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => handlePatientSelect(patient)}
-                >
-                  View
-                </button>
+      <div className="flex h-[calc(100vh-80px)]">
+        {/* Sidebar */}
+        <div className="w-1/3 bg-white shadow-xl border-r border-gray-200 overflow-y-auto">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-orange-50">
+            <h1 className="text-xl font-bold text-gray-800 flex items-center">
+              <FaExclamationTriangle className="text-red-500 mr-3" />
+              High/Moderate Risk Patients ({filteredPatients.length})
+            </h1>
+          </div>
+          
+          <div className="p-4 space-y-4">
+            {filteredPatients.length === 0 ? (
+              <div className="text-center py-8">
+                <FaClipboardList className="text-gray-400 text-4xl mx-auto mb-4" />
+                <p className="text-gray-600">No high/moderate risk patients found</p>
               </div>
-            );
-          })}
+            ) : (
+              filteredPatients.map(patient => {
+                const { riskScore, riskCategory } = patient.assessment?.riskAssessment || {};
+                const isHighRisk = riskCategory === 'High Risk';
+                
+                return (
+                  <div 
+                    key={patient.id} 
+                    className={`bg-white border-2 rounded-lg p-4 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-1 ${
+                      selectedPatient?.id === patient.id 
+                        ? 'border-blue-500 shadow-lg ring-2 ring-blue-200' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handlePatientSelect(patient)}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-semibold text-gray-800 text-lg">
+                        {patient.tokenNumber}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        isHighRisk 
+                          ? 'bg-red-100 text-red-800 border border-red-200' 
+                          : 'bg-orange-100 text-orange-800 border border-orange-200'
+                      }`}>
+                        {riskCategory}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-900 flex items-center">
+                        <FaUser className="text-gray-500 mr-2 text-sm" />
+                        {patient.name}
+                      </p>
+                      <p className="text-sm text-gray-600 flex items-center justify-between">
+                        <span className="flex items-center">
+                          <FaHeartbeat className="text-red-500 mr-2" />
+                          Risk Score:
+                        </span>
+                        <span className={`font-bold ${isHighRisk ? 'text-red-600' : 'text-orange-600'}`}>
+                          {riskScore ?? 'N/A'}
+                        </span>
+                      </p>
+                    </div>
+                    
+                    <button className={`w-full mt-3 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                      selectedPatient?.id === patient.id
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                    }`}>
+                      {selectedPatient?.id === patient.id ? 'Selected' : 'View Details'}
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
-        <div className="main-content">
+        {/* Main Content */}
+        <div className="flex-1 bg-gray-50 overflow-y-auto">
           {selectedPatient && selectedAssessment ? (
-            <>
-              <div id="report-section">
-                <h3>Basic Information</h3>
-                <p><strong>Name:</strong> {selectedPatient.name}</p>
-                <p><strong>Age:</strong> {selectedPatient.age}</p>
-                <p><strong>Gender:</strong> {selectedPatient.gender}</p>
-                <p><strong>Phone:</strong> {selectedPatient.phone}</p>
-                <p><strong>Email:</strong> {selectedPatient.email}</p>
-                <p><strong>Locality:</strong> {selectedPatient.locality}</p>
-                <p><strong>Blood Pressure:</strong> {selectedPatient.bloodPressure}</p>
-                <p><strong>BMI:</strong> {selectedPatient.bmi}</p>
-                <p><strong>Waist Circumference:</strong> {selectedPatient.waist}</p>
-                <p><strong>HDL:</strong> {selectedPatient.hdl}</p>
-                <p><strong>LDL:</strong> {selectedPatient.ldl}</p>
-
-                <h3>Test Results</h3>
-                <p><strong>Hemoglobin:</strong> {selectedPatient.hemoglobin}</p>
-                <p><strong>WBC:</strong> {selectedPatient.wbc}</p>
-                <p><strong>Platelets:</strong> {selectedPatient.platelets}</p>
-                <p><strong>RBC:</strong> {selectedPatient.rbc}</p>
-                <p><strong>Hematocrit:</strong> {selectedPatient.hematocrit}</p>
-                <p><strong>CRP:</strong> {selectedPatient.crp}</p>
-                <p><strong>RBS:</strong> {selectedPatient.rbs}</p>
-                <p><strong>HbA1c:</strong> {selectedPatient.hba1c}</p>
-                <p><strong>Cholesterol:</strong> {selectedPatient.cholesterol}</p>
-                <p><strong>TG:</strong> {selectedPatient.tg}</p>
-                <p><strong>Homocysteine:</strong> {selectedPatient.homocysteine}</p>
-                <p><strong>Lipoprotein A:</strong> {selectedPatient.lipoprotein}</p>
-
-                <h3>Contributing Risk Factors</h3>
-                <ul>
-                  {extractRiskFactors(selectedPatient, selectedAssessment).map((factor, index) => (
-                    <li key={index}>{factor}</li>
-                  ))}
-                </ul>
+            <div className="p-6 space-y-6">
+              {/* Patient Header */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                    <FaUser className="text-blue-600 mr-3" />
+                    {selectedPatient.name}
+                  </h2>
+                  <div className={`px-4 py-2 rounded-full font-bold ${
+                    selectedPatient.assessment?.riskAssessment?.riskCategory === 'High Risk'
+                      ? 'bg-red-100 text-red-800 border border-red-200'
+                      : 'bg-orange-100 text-orange-800 border border-orange-200'
+                  }`}>
+                    {selectedPatient.assessment?.riskAssessment?.riskCategory}
+                  </div>
+                </div>
               </div>
 
-              <div style={{ marginTop: '20px' }}>
-                <label htmlFor="doctor-note"><strong>Doctor's Recommendation:</strong></label>
+              <div id="report-section" className="space-y-6">
+                {/* Basic Information */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <FaClipboardList className="text-blue-600 mr-3" />
+                    Basic Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FaUser className="text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">Name</p>
+                        <p className="font-semibold text-gray-800">{selectedPatient.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">A</span>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Age</p>
+                        <p className="font-semibold text-gray-800">{selectedPatient.age}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="text-sm text-gray-600">Gender</p>
+                        <p className="font-semibold text-gray-800">{selectedPatient.gender}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FaPhone className="text-green-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">Phone</p>
+                        <p className="font-semibold text-gray-800">{selectedPatient.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FaEnvelope className="text-blue-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-semibold text-gray-800">{selectedPatient.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FaMapMarkerAlt className="text-red-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">Locality</p>
+                        <p className="font-semibold text-gray-800">{selectedPatient.locality}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vital Signs */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <FaHeartbeat className="text-red-500 mr-3" />
+                    Vital Signs & Measurements
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                      <div className="flex items-center justify-between">
+                        <FaHeartbeat className="text-red-500 text-xl" />
+                        <span className="text-xs text-red-600 font-medium">mmHg</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">Blood Pressure</p>
+                      <p className="font-bold text-gray-800 text-lg">{selectedPatient.bloodPressure}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <FaWeight className="text-blue-500 text-xl" />
+                        <span className="text-xs text-blue-600 font-medium">kg/m²</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">BMI</p>
+                      <p className="font-bold text-gray-800 text-lg">{selectedPatient.bmi}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                      <div className="flex items-center justify-between">
+                        <FaRulerHorizontal className="text-green-500 text-xl" />
+                        <span className="text-xs text-green-600 font-medium">cm</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">Waist</p>
+                      <p className="font-bold text-gray-800 text-lg">{selectedPatient.waist}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                      <div className="flex items-center justify-between">
+                        <FaFlask className="text-purple-500 text-xl" />
+                        <span className="text-xs text-purple-600 font-medium">mg/dL</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">HDL / LDL</p>
+                      <p className="font-bold text-gray-800 text-lg">{selectedPatient.hdl} / {selectedPatient.ldl}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Test Results */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <FaFlask className="text-green-600 mr-3" />
+                    Laboratory Results
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Hemoglobin', value: selectedPatient.hemoglobin, unit: 'g/dL', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-600' },
+                      { label: 'WBC', value: selectedPatient.wbc, unit: '/μL', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-600' },
+                      { label: 'Platelets', value: selectedPatient.platelets, unit: '/μL', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-600' },
+                      { label: 'RBC', value: selectedPatient.rbc, unit: 'M/μL', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-600' },
+                      { label: 'Hematocrit', value: selectedPatient.hematocrit, unit: '%', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-600' },
+                      { label: 'CRP', value: selectedPatient.crp, unit: 'mg/L', bgColor: 'bg-pink-50', borderColor: 'border-pink-200', textColor: 'text-pink-600' },
+                      { label: 'RBS', value: selectedAssessment.rbs, unit: 'mg/dL', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200', textColor: 'text-indigo-600' },
+                      { label: 'HbA1c', value: selectedAssessment.hba1c, unit: '%', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-600' },
+                      { label: 'Cholesterol', value: selectedAssessment.cholesterol, unit: 'mg/dL', bgColor: 'bg-teal-50', borderColor: 'border-teal-200', textColor: 'text-teal-600' },
+                      { label: 'TG', value: selectedPatient.tg, unit: 'mg/dL', bgColor: 'bg-cyan-50', borderColor: 'border-cyan-200', textColor: 'text-cyan-600' },
+                      { label: 'Homocysteine', value: selectedPatient.homocysteine, unit: 'μmol/L', bgColor: 'bg-lime-50', borderColor: 'border-lime-200', textColor: 'text-lime-600' },
+                      { label: 'Lipoprotein A', value: selectedPatient.lipoprotein, unit: 'mg/dL', bgColor: 'bg-rose-50', borderColor: 'border-rose-200', textColor: 'text-rose-600' }
+                    ].map((test, index) => (
+                      <div key={index} className={`${test.bgColor} ${test.borderColor} border p-3 rounded-lg`}>
+                        <p className={`text-sm ${test.textColor} font-medium`}>{test.label}</p>
+                        <p className="font-bold text-gray-800 text-lg">{test.value || 'N/A'}</p>
+                        <p className={`text-xs ${test.textColor}`}>{test.unit}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Risk Factors */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-red-200">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <FaExclamationTriangle className="text-red-500 mr-3" />
+                    Contributing Risk Factors
+                  </h3>
+                  <div className="space-y-2">
+                    {extractRiskFactors(selectedPatient, selectedAssessment).map((factor, index) => (
+                      <div key={index} className="flex items-center space-x-3 p-3 bg-orange-50 border border-red-200 rounded-lg">
+                        <FaExclamationTriangle className="text-red-500 text-sm" />
+                        <span className="text-gray-800">{factor}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Doctor's Recommendation */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+                <label htmlFor="doctor-note" className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  <FaClipboardList className="text-blue-600 mr-3" />
+                  Doctor's Recommendation
+                </label>
                 <textarea
                   id="doctor-note"
                   rows="4"
-                  placeholder="Write your recommendation here..."
-                  style={{
-                    width: '100%',
-                    marginTop: '8px',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: '1px solid #ccc',
-                    fontSize: '14px',
-                    fontFamily: 'inherit'
-                  }}
+                  placeholder="Write your detailed recommendation for the patient..."
+                  className="w-full mt-3 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
                   value={doctorNote}
                   onChange={(e) => setDoctorNote(e.target.value)}
                 />
               </div>
 
-              <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
-                <button className="submit-button" onClick={generatePDF}>
-                  Generate PDF Report
-                </button>
-                <button
-                  className="submit-button"
-                  style={{ backgroundColor: '#28a745' }}
-                  onClick={sendToWhatsApp}
-                >
-                  Send to Patient
-                </button>
-              </div>
-            </>
+              {/* Action Buttons */}
+<div className="flex flex-col sm:flex-row gap-4">
+  <button 
+    className={`flex-1 ${isGeneratingPDF ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'} text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-3`}
+    onClick={generatePDF}
+    disabled={isGeneratingPDF}
+  >
+    {isGeneratingPDF ? (
+      <>
+        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+        <span>Generating PDF...</span>
+      </>
+    ) : (
+      <>
+        <FaFilePdf className="text-xl" />
+        <span>Generate PDF Report</span>
+      </>
+    )}
+  </button>
+  <button
+    className={`flex-1 ${isSendingWhatsApp ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'} text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-3`}
+    onClick={sendToWhatsApp}
+    disabled={isSendingWhatsApp}
+  >
+    {isSendingWhatsApp ? (
+      <>
+        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+        <span>Preparing...</span>
+      </>
+    ) : (
+      <>
+        <FaWhatsapp className="text-xl" />
+        <span>Send to Patient</span>
+      </>
+    )}
+  </button>
+</div>
+            </div>
           ) : (
-            <div>
-              <p>Select a patient to view details and generate report.</p>
+            <div className="flex-1 flex items-center justify-center m-16">
+              <div className="text-center p-12 bg-white rounded-xl shadow-lg border border-gray-200 max-w-md">
+                <FaClipboardList className="text-6xl text-gray-400 mx-auto mb-6" />
+                <h3 className="text-xl font-bold text-gray-800 mb-3">No Patient Selected</h3>
+                <p className="text-gray-600">Select a patient from the sidebar to view their details and generate a medical report.</p>
+              </div>
             </div>
           )}
         </div>
       </div>
-    </>
+    </div>
+  </>
   );
 };
 
