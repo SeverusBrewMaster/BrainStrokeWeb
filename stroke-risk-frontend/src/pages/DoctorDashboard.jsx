@@ -779,7 +779,7 @@ Visit: brainline.info`
                     {extractRiskFactors(selectedPatient, selectedAssessment).map((factor, index) => (
                       <div key={index} className="flex items-center space-x-3 p-3 bg-orange-50 border border-red-200 rounded-lg">
   <svg
-    className="w-4 h-4 text-blue-600"
+    className="w-4 h-4 text-red-600"
     fill="currentColor"
     viewBox="0 0 20 20"
   >
