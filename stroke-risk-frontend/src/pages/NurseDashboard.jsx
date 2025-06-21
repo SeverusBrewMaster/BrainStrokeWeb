@@ -5,7 +5,8 @@ import {
   where, getDoc, getDocs, deleteDoc, doc
 } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaTrashAlt, FaChevronDown, FaChevronUp, FaPlus, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaWeight, FaRuler, FaHeartbeat, FaFlask } from "react-icons/fa";
+import { updateDoc } from "firebase/firestore";
+import { FaUserCircle, FaTrashAlt, FaChevronDown, FaChevronUp, FaPlus, FaEdit, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaWeight, FaRuler, FaHeartbeat, FaFlask } from "react-icons/fa";
 
 const Modal = ({ isOpen, onClose, title, message, type = 'info' }) => {
   if (!isOpen) return null;
@@ -93,6 +94,12 @@ const NurseDashboard = () => {
   const [recentPatients, setRecentPatients] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [totalPatients, setTotalPatients] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPatientId, setEditingPatientId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredPatients, setFilteredPatients] = useState([]);
+
+
   const [modal, setModal] = useState({
     isOpen: false,
     title: '',
@@ -127,6 +134,78 @@ const NurseDashboard = () => {
   }, 1500);
 };
 
+  const handleEdit = (patient) => {
+    setPatientData({
+      name: patient.name,
+      age: patient.age,
+      locality: patient.locality,
+      phone: patient.phone,
+      email: patient.email,
+      aqi: patient.aqi,
+      weight: patient.weight,
+      height: patient.height,
+      bmi: patient.bmi,
+      waist: patient.waist,
+      hdl: patient.hdl,
+      ldl: patient.ldl,
+      gender: patient.gender,
+      hemoglobin: patient.hemoglobin,
+      wbc: patient.wbc,
+      platelets: patient.platelets,
+      rbc: patient.rbc,
+      hematocrit: patient.hematocrit,
+      crp: patient.crp,
+      rbs: patient.rbs,
+      hba1c: patient.hba1c,
+      cholesterol: patient.cholesterol,
+      tg: patient.tg,
+      homocysteine: patient.homocysteine,
+      lipoprotein: patient.lipoprotein,
+      bloodPressure: patient.bloodPressure,
+      onBloodThinner: patient.onBloodThinner
+    });
+    setIsEditing(true);
+    setEditingPatientId(patient.id);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditingPatientId(null);
+    setPatientData({
+      name: '', age: '', locality: '', phone: '', email: '', aqi: '',
+      weight: '', height: '', bmi: '', waist: '',
+      hdl: '', ldl: '', gender: '',
+      hemoglobin: '', wbc: '', platelets: '', rbc: '', hematocrit: '',
+      crp: '', rbs: '', hba1c: '',
+      cholesterol: '', tg: '', homocysteine: '', lipoprotein: '',
+      bloodPressure: '',
+      onBloodThinner: false
+    });
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    
+    if (!query.trim()) {
+      setFilteredPatients(recentPatients);
+      return;
+    }
+
+    const filtered = recentPatients.filter(patient => {
+      const searchTerm = query.toLowerCase();
+      return (
+        patient.name.toLowerCase().includes(searchTerm) ||
+        patient.phone.includes(searchTerm) ||
+        patient.email.toLowerCase().includes(searchTerm) ||
+        patient.locality.toLowerCase().includes(searchTerm) ||
+        patient.age.toString().includes(searchTerm) ||
+        patient.gender.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    setFilteredPatients(filtered);
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
@@ -159,22 +238,35 @@ const NurseDashboard = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const bpPattern = /^\d{2,3}\/\d{2,3}$/;
-    if (!bpPattern.test(patientData.bloodPressure)) {
-      showModal(
-        'Invalid Blood Pressure', 
-        'Please enter valid blood pressure in the format systolic/diastolic (e.g., 120/80).', 
-        'error'
-      );
-      return;
-    }
+  const bpPattern = /^\d{2,3}\/\d{2,3}$/;
+  if (!bpPattern.test(patientData.bloodPressure)) {
+    showModal(
+      'Invalid Blood Pressure', 
+      'Please enter valid blood pressure in the format systolic/diastolic (e.g., 120/80).', 
+      'error'
+    );
+    return;
+  }
 
-    const token = `PAT${Date.now()}`;
-    const defaultStatus = "Pending";
+  try {
+    if (isEditing) {
+      // Update existing patient
+      const patientRef = doc(db, "patients", editingPatientId);
+      await updateDoc(patientRef, {
+        ...patientData,
+        updatedAt: Timestamp.now()
+      });
 
-    try {
+      showModal('Success', 'Patient information has been successfully updated!', 'success');
+      setIsEditing(false);
+      setEditingPatientId(null);
+    } else {
+      // Add new patient
+      const token = `PAT${Date.now()}`;
+      const defaultStatus = "Pending";
+
       await addDoc(collection(db, "patients"), {
         ...patientData,
         tokenNumber: token,
@@ -183,31 +275,34 @@ const NurseDashboard = () => {
       });
 
       showModal('Success', 'Patient has been successfully added to the system!', 'success');
-
-      setPatientData({
-        name: '', age: '', locality: '', phone: '', email: '', aqi: '',
-        weight: '', height: '', bmi: '', waist: '',
-        hdl: '', ldl: '', gender: '',
-        hemoglobin: '', wbc: '', platelets: '', rbc: '', hematocrit: '',
-        crp: '', rbs: '', hba1c: '',
-        cholesterol: '', tg: '', homocysteine: '', lipoprotein: '',
-        bloodPressure: '',
-        onBloodThinner: false
-      });
-
-      fetchRecentPatients();
-      fetchTotalPatients();
-    } catch (error) {
-      console.error("Error:", error);
-      showModal('Error', 'Failed to save patient information. Please try again.', 'error');
     }
-  };
+
+    setPatientData({
+      name: '', age: '', locality: '', phone: '', email: '', aqi: '',
+      weight: '', height: '', bmi: '', waist: '',
+      hdl: '', ldl: '', gender: '',
+      hemoglobin: '', wbc: '', platelets: '', rbc: '', hematocrit: '',
+      crp: '', rbs: '', hba1c: '',
+      cholesterol: '', tg: '', homocysteine: '', lipoprotein: '',
+      bloodPressure: '',
+      onBloodThinner: false
+    });
+
+    fetchRecentPatients();
+    fetchTotalPatients();
+  } catch (error) {
+    console.error("Error:", error);
+    showModal('Error', 'Failed to save patient information. Please try again.', 'error');
+  }
+};
 
   const fetchRecentPatients = async () => {
     const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setRecentPatients(data.slice(0, 3));
+    const recentData = data.slice(0, 50); // Increased from 3 to show more patients for search
+    setRecentPatients(recentData);
+    setFilteredPatients(recentData); // Initialize filtered patients
     setTotalPatients(snapshot.docs.length);
   };
 
@@ -234,6 +329,10 @@ const NurseDashboard = () => {
   useEffect(() => {
     fetchRecentPatients();
   }, []);
+
+  useEffect(() => {
+    setFilteredPatients(recentPatients);
+  }, [recentPatients]);
 
   return (
     <>
@@ -281,136 +380,209 @@ const NurseDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Sidebar - Recent Patients */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white flex items-center">
-                    <FaUser className="mr-3" />
-                    Recent Patients
-                  </h2>
-                  <span className="bg-white/50 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {totalPatients}
-                  </span>
+<div className="lg:col-span-1">
+  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-white flex items-center">
+          <FaUser className="mr-3" />
+          Recent Patients
+        </h2>
+        <span className="bg-white/50 text-white px-3 py-1 rounded-full text-sm font-medium">
+          {totalPatients}
+        </span>
+      </div>
+    </div>
+    
+    {/* Search Bar */}
+    <div className="p-4 border-b border-gray-200 bg-gray-50">
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search patients by name, phone, email..."
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+        />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        {searchQuery && (
+          <button
+            onClick={() => handleSearch('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+          >
+            <svg className="h-4 w-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {searchQuery && (
+        <p className="text-xs text-gray-500 mt-2">
+          Showing {filteredPatients.length} of {recentPatients.length} patients
+        </p>
+      )}
+    </div>
+    
+    <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
+      {filteredPatients.length === 0 && searchQuery ? (
+        <div className="text-center py-8">
+          <div className="text-gray-400 mb-2">
+            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <p className="text-gray-500 text-sm">No patients found matching "{searchQuery}"</p>
+          <button
+            onClick={() => handleSearch('')}
+            className="text-blue-500 text-sm hover:text-blue-700 mt-2"
+          >
+            Clear search
+          </button>
+        </div>
+      ) : filteredPatients.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500 text-sm">No patients added yet</p>
+        </div>
+      ) : (
+        filteredPatients.map(patient => (
+          <div key={patient.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
+            {/* Rest of your existing patient card JSX remains the same */}
+            <div className="bg-gray-50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 flex items-center">
+                    <FaUser className="mr-2 text-blue-500" />
+                    {patient.name}
+                  </h3>
+                  <div className="text-sm text-gray-600 mt-1 space-y-1">
+                    <p className="flex items-center">
+                      <span className="font-medium mr-2">Age:</span> {patient.age}
+                    </p>
+                    <p className="flex items-center">
+                      <FaPhone className="mr-2 text-green-500" />
+                      {patient.phone}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
-                {recentPatients.map(patient => (
-                  <div key={patient.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
-                    <div className="bg-gray-50 p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 flex items-center">
-                            <FaUser className="mr-2 text-blue-500" />
-                            {patient.name}
-                          </h3>
-                          <div className="text-sm text-gray-600 mt-1 space-y-1">
-                            <p className="flex items-center">
-                              <span className="font-medium mr-2">Age:</span> {patient.age}
-                            </p>
-                            <p className="flex items-center">
-                              <FaPhone className="mr-2 text-green-500" />
-                              {patient.phone}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => toggleExpand(patient.id)}
-                          className="flex items-center px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors duration-200"
-                        >
-                          {expandedId === patient.id ? (
-                            <>
-                              <FaChevronUp className="mr-1" />
-                              Hide
-                            </>
-                          ) : (
-                            <>
-                              <FaChevronDown className="mr-1" />
-                              More
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(patient.id)}
-                          className="flex items-center px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors duration-200"
-                        >
-                          <FaTrashAlt className="mr-1" />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {expandedId === patient.id && (
-                      <div className="bg-white p-4 border-t border-gray-200">
-                        <div className="grid grid-cols-1 gap-3 text-sm">
-                          <div className="flex items-center">
-                            <FaEnvelope className="mr-2 text-blue-500" />
-                            <span className="font-medium mr-2">Email:</span>
-                            <span className="text-gray-600">{patient.email}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="font-medium mr-2">Gender:</span>
-                            <span className="text-gray-600">{patient.gender}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <FaMapMarkerAlt className="mr-2 text-red-500" />
-                            <span className="font-medium mr-2">Locality:</span>
-                            <span className="text-gray-600">{patient.locality}</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 pt-2">
-                            <div>
-                              <span className="font-medium">Weight:</span>
-                              <span className="text-gray-600 ml-1">{patient.weight} kg</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">Height:</span>
-                              <span className="text-gray-600 ml-1">{patient.height} cm</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">BMI:</span>
-                              <span className="text-gray-600 ml-1">{patient.bmi}</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">BP:</span>
-                              <span className="text-gray-600 ml-1">{patient.bloodPressure}</span>
-                            </div>
-                          </div>
-                          <div className="pt-2 border-t border-gray-100">
-                            <p className="font-medium text-gray-700 mb-2">Lab Results:</p>
-                            <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
-                              <div>HDL: {patient.hdl}</div>
-                              <div>LDL: {patient.ldl}</div>
-                              <div>Hb: {patient.hemoglobin}</div>
-                              <div>WBC: {patient.wbc}</div>
-                              <div>RBC: {patient.rbc}</div>
-                              <div>HbA1c: {patient.hba1c}</div>
-                            </div>
-                          </div>
-                          <div className="pt-2">
-                            <span className="font-medium">Blood Thinner:</span>
-                            <span className={`ml-2 px-2 py-1 rounded-full text-xs ${patient.onBloodThinner ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                              {patient.onBloodThinner ? 'Yes' : 'No'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => toggleExpand(patient.id)}
+                  className="flex items-center px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors duration-200"
+                >
+                  {expandedId === patient.id ? (
+                    <>
+                      <FaChevronUp className="mr-1" />
+                      Hide
+                    </>
+                  ) : (
+                    <>
+                      <FaChevronDown className="mr-1" />
+                      More
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleEdit(patient)}
+                  className="flex items-center px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 transition-colors duration-200"
+                >
+                  <FaEdit className="mr-1" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(patient.id)}
+                  className="flex items-center px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors duration-200"
+                >
+                  <FaTrashAlt className="mr-1" />
+                  Delete
+                </button>
               </div>
             </div>
+            
+            {expandedId === patient.id && (
+              <div className="bg-white p-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="flex items-center">
+                    <FaEnvelope className="mr-2 text-blue-500" />
+                    <span className="font-medium mr-2">Email:</span>
+                    <span className="text-gray-600">{patient.email}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="font-medium mr-2">Gender:</span>
+                    <span className="text-gray-600">{patient.gender}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <FaMapMarkerAlt className="mr-2 text-red-500" />
+                    <span className="font-medium mr-2">Locality:</span>
+                    <span className="text-gray-600">{patient.locality}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <div>
+                      <span className="font-medium">Weight:</span>
+                      <span className="text-gray-600 ml-1">{patient.weight} kg</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Height:</span>
+                      <span className="text-gray-600 ml-1">{patient.height} cm</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">BMI:</span>
+                      <span className="text-gray-600 ml-1">{patient.bmi}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">BP:</span>
+                      <span className="text-gray-600 ml-1">{patient.bloodPressure}</span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-gray-100">
+                    <p className="font-medium text-gray-700 mb-2">Lab Results:</p>
+                    <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
+                      <div>HDL: {patient.hdl}</div>
+                      <div>LDL: {patient.ldl}</div>
+                      <div>Hb: {patient.hemoglobin}</div>
+                      <div>WBC: {patient.wbc}</div>
+                      <div>RBC: {patient.rbc}</div>
+                      <div>HbA1c: {patient.hba1c}</div>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <span className="font-medium">Blood Thinner:</span>
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs ${patient.onBloodThinner ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                      {patient.onBloodThinner ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+        ))
+      )}
+    </div>
+  </div>
+</div>
 
           {/* Main Content - Add Patient Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-green-500 to-green-700 px-6 py-4">
-                <h2 className="text-xl font-semibold text-white flex items-center">
-                  <FaPlus className="mr-2" />
-                  Add New Patient
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-white flex items-center">
+                    <FaPlus className="mr-2" />
+                    {isEditing ? 'Edit Patient' : 'Add New Patient'}
+                  </h2>
+                  {isEditing && (
+                    <button
+                      onClick={handleCancelEdit}
+                      className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors duration-200"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
               </div>
               
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -498,7 +670,6 @@ const NurseDashboard = () => {
                         placeholder="Enter email address"
                         value={patientData.email}
                         onChange={handleChange}
-                        required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
@@ -509,6 +680,7 @@ const NurseDashboard = () => {
                         name="aqi"
                         placeholder="Enter AQI value"
                         value={patientData.aqi}
+                        required
                         onChange={handleChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
@@ -560,14 +732,14 @@ const NurseDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Waist Circumference (Auto)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Waist (cm)</label>
                       <input
-                        type="text"
-                        name="waist"
-                        placeholder="Calculated automatically"
+                        type="number"
+                        name="height"
+                        placeholder="Enter waist in cm"
                         value={patientData.waist}
-                        disabled
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
                   </div>
@@ -791,7 +963,7 @@ const NurseDashboard = () => {
                     className="w-full bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center space-x-2"
                   >
                     <FaPlus className="text-lg" />
-                    <span className="text-lg">Add Patient</span>
+                    <span className="text-lg">{isEditing ? 'Update Patient' : 'Add Patient'}</span>
                   </button>
                 </div>
               </form>

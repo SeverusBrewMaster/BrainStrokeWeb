@@ -935,8 +935,8 @@ const handleSaveAfterAssessment = async () => {
                       <User className="w-5 h-5 mr-2" />
                       Personal History
                     </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <RadioGroup
                         label="Do you engage in regular physical activity or exercise?"
                         value={exercise}
@@ -947,19 +947,6 @@ const handleSaveAfterAssessment = async () => {
                         ]}
                       />
 
-                      {exercise === 'yes' && (
-                        <RadioGroup
-                          label="How often?"
-                          value={exerciseFrequency}
-                          onChange={setExerciseFrequency}
-                          options={[
-                            { value: 'daily', label: 'Daily' },
-                            { value: '3-5', label: '3-5 times/week' },
-                            { value: '1-2', label: '1-2 times/week' }
-                          ]}
-                        />
-                      )}
-
                       <RadioGroup
                         label="What is your typical diet?"
                         value={diet}
@@ -968,19 +955,6 @@ const handleSaveAfterAssessment = async () => {
                           { value: 'veg', label: 'Vegetarian' },
                           { value: 'non-veg', label: 'Non-Vegetarian' },
                           { value: 'mixed', label: 'Mixed' }
-                        ]}
-                      />
-
-                      <RadioGroup
-                        label="How often do you order outside food?"
-                        value={outsideFood}
-                        onChange={setOutsideFood}
-                        options={[
-                          { value: 'never', label: 'Never' },
-                          { value: 'rarely', label: 'Rarely' },
-                          { value: 'occasionally', label: 'Occasionally' },
-                          { value: 'regularly', label: 'Regularly' },
-                          { value: 'frequently', label: 'Frequently' }
                         ]}
                       />
 
@@ -996,6 +970,34 @@ const handleSaveAfterAssessment = async () => {
                           { value: 'other', label: 'Other' }
                         ]}
                       />
+                    </div>
+                      
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                      {exercise === 'yes' && (
+                        <RadioGroup
+                          label="How often do you exercise?"
+                          value={exerciseFrequency}
+                          onChange={setExerciseFrequency}
+                          options={[
+                            { value: 'daily', label: 'Daily' },
+                            { value: '3-5', label: '3-5 times/week' },
+                            { value: '1-2', label: '1-2 times/week' }
+                          ]}
+                        />
+                      )}
+
+                      <RadioGroup
+                        label="How often do you order outside food?"
+                        value={outsideFood}
+                        onChange={setOutsideFood}
+                        options={[
+                          { value: 'never', label: 'Never' },
+                          { value: 'rarely', label: 'Rarely' },
+                          { value: 'occasionally', label: 'Occasionally' },
+                          { value: 'regularly', label: 'Regularly' },
+                          { value: 'frequently', label: 'Frequently' }
+                        ]}
+                      />
 
                       <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Profession</label>
@@ -1007,7 +1009,19 @@ const handleSaveAfterAssessment = async () => {
                           placeholder="Enter profession"
                         />
                       </div>
-
+                      
+                      <RadioGroup
+                        label="Do you smoke?"
+                        value={smoke}
+                        onChange={setSmoke}
+                        options={[
+                          { value: 'yes', label: 'Yes' },
+                          { value: 'no', label: 'No' }
+                        ]}
+                      />
+                    </div>
+                      
+                    <div className="grid grid-cols-1 gap-6 mt-6">
                       <RadioGroup
                         label="Alcohol consumption frequency"
                         value={alcoholFrequency}
@@ -1019,17 +1033,6 @@ const handleSaveAfterAssessment = async () => {
                           { value: 'multiple-daily', label: 'Multiple daily (>2 drinks)' }
                         ]}
                       />
-
-                      <RadioGroup
-                        label="Do you smoke?"
-                        value={smoke}
-                        onChange={setSmoke}
-                        options={[
-                          { value: 'yes', label: 'Yes' },
-                          { value: 'no', label: 'No' }
-                        ]}
-                      />
-
                     </div>
                   </div>
 
@@ -1066,7 +1069,6 @@ const handleSaveAfterAssessment = async () => {
                           max="24"
                         />
                       </div>
-                      
                     </div>
                   </div>
 
@@ -1076,7 +1078,7 @@ const handleSaveAfterAssessment = async () => {
                       <Heart className="w-5 h-5 mr-2" />
                       Medical History
                     </h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <RadioGroup
                         label="High Blood Pressure"
@@ -1097,16 +1099,6 @@ const handleSaveAfterAssessment = async () => {
                           { value: 'no', label: 'No' }
                         ]}
                       />
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Random Blood Sugar</label>
-                        <input
-                          type="number"
-                          value={rnddiabetesNum}
-                          onChange={(e) => setRnddiabetesNum(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter sugar"
-                        />
-                      </div>
 
                       <RadioGroup
                         label="High Cholesterol"
@@ -1139,6 +1131,35 @@ const handleSaveAfterAssessment = async () => {
                       />
 
                       <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Random Blood Sugar</label>
+                        <input
+                          type="number"
+                          value={rnddiabetesNum}
+                          onChange={(e) => setRnddiabetesNum(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Enter sugar level"
+                        />
+                      </div>
+                    </div>
+
+                    {/* TIA History - NEW SECTION */}
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <h4 className="text-md font-medium text-gray-900 mb-4">Neurological History</h4>
+                      <div className="grid grid-cols-1 gap-6">
+                        <RadioGroup
+                          label="Have you experienced any episode of TIA (Transient Ischemic Attack) in the last 3 months?"
+                          value={tiaHistory}
+                          onChange={setTiaHistory}
+                          options={[
+                            { value: 'yes', label: 'Yes' },
+                            { value: 'no', label: 'No' }
+                          ]}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6 mt-6">
+                      <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Other medical conditions</label>
                         <textarea
                           value={otherCondition}
@@ -1151,24 +1172,26 @@ const handleSaveAfterAssessment = async () => {
                     </div>
 
                     {(hypertension === 'yes' || diabetes === 'yes') && (
-                      <RadioGroup
-                        label="How often do you check your BP/Blood Sugar?"
-                        value={bpCheckFrequency}
-                        onChange={setBpCheckFrequency}
-                        options={[
-                          { value: 'daily', label: 'Daily' },
-                          { value: 'weekly', label: 'Weekly' },
-                          { value: 'monthly', label: 'Monthly' },
-                          { value: 'few-months', label: 'Every Few Months' },
-                          { value: 'yearly', label: 'Yearly' }
-                        ]}
-                      />
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <RadioGroup
+                          label="How often do you check your BP/Blood Sugar?"
+                          value={bpCheckFrequency}
+                          onChange={setBpCheckFrequency}
+                          options={[
+                            { value: 'daily', label: 'Daily' },
+                            { value: 'weekly', label: 'Weekly' },
+                            { value: 'monthly', label: 'Monthly' },
+                            { value: 'few-months', label: 'Every Few Months' },
+                            { value: 'yearly', label: 'Yearly' }
+                          ]}
+                        />
+                      </div>
                     )}
 
                     {selectedPatient.gender === 'Female' && (
                       <div className="mt-6 pt-6 border-t border-gray-200">
                         <h4 className="text-md font-medium text-gray-900 mb-4">Female-Specific History</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <RadioGroup
                             label="Have you ever taken oral contraceptives?"
                             value={contraceptives}
@@ -1342,16 +1365,6 @@ const handleSaveAfterAssessment = async () => {
                           <p className="text-red-700 mb-4">
                             Based on your assessment, we strongly recommend consulting with a healthcare provider immediately.
                           </p>
-                          <button
-                            onClick={() => {
-                              alert('Patient flagged for doctor consultation. Referral sent to medical team.');
-                              setShowDoctorReferral(false);
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300 flex items-center gap-2"
-                          >
-                            <Heart className="w-4 h-4" />
-                            Forward to Doctor
-                          </button>
                         </div>
                       )}
 
@@ -1380,16 +1393,6 @@ const handleSaveAfterAssessment = async () => {
                       )}
 
                       <div className="flex gap-4">
-                        <button
-                          onClick={() => {
-                            setResults({ ...results, modalVisible: false });
-                            setSaveStatus('');
-                          }}
-                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-300"
-                        >
-                          Close Without Saving
-                        </button>
-                        
                         {saveStatus !== 'success' && (
                           <button
                             onClick={handleSaveAfterAssessment}
