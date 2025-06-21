@@ -371,9 +371,12 @@ const generatePDF = () => {
     const patient = selectedPatient;
     const assessment = selectedAssessment;
     const riskFactors = extractRiskFactors(patient, assessment);
-    const doctorNote = assessment?.riskAssessment?.recommendations || "No specific recommendations provided at this time.";
+   const note = doctorNote || "No specific recommendations provided at this time.";
     const timestamp = new Date().toLocaleString();
-    const fileName = `${patient.tokenNumber}_Report_${Date.now()}.pdf`;
+
+    // ✅ Sanitize patient name for filename
+    const sanitizedPatientName = patient.name.replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `${sanitizedPatientName}_Brainline_Report.pdf`;
 
     // ✅ Create and style PDF content
     const pdfContainer = document.createElement('div');
@@ -450,7 +453,7 @@ const generatePDF = () => {
       <div style="margin-bottom: 20px;">
         <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Doctor's Recommendation</h3>
         <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
-          <div style="width: 100%;">${doctorNote}</div>
+          <div style="width: 100%;">${note}</div>
         </div>
       </div>
 
@@ -461,6 +464,9 @@ const generatePDF = () => {
     `;
 
     document.body.appendChild(pdfContainer);
+
+    // ✅ Wait to ensure DOM is fully rendered
+    await new Promise(res => setTimeout(res, 100));
 
     // ✅ Generate PDF as a Blob
     const pdfBlob = await html2pdf()
@@ -484,7 +490,7 @@ const generatePDF = () => {
       formData
     );
 
-    // ✅ Generate downloadable link
+    // ✅ Force PDF download filename
     const downloadURL = uploadRes.data.secure_url + `?fl_attachment=${fileName}`;
 
     // ✅ Open WhatsApp with link
@@ -560,7 +566,7 @@ brainline.info
   <>
     {/* Tailwind CSS CDN */}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/4.0.4/colors.min.js" rel="stylesheet" />
+    {/* <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/4.0.4/colors.min.js" rel="stylesheet" /> */}
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Navigation Bar */}
       <div className="bg-white shadow-lg border-b border-gray-200">

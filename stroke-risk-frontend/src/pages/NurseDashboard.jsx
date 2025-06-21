@@ -689,272 +689,244 @@ const NurseDashboard = () => {
                 </div>
 
                 {/* Physical Measurements */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
-                    <FaWeight className="mr-2 text-blue-500" />
-                    Physical Measurements
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
-                      <input
-                        type="number"
-                        name="weight"
-                        placeholder="Enter weight in kg"
-                        value={patientData.weight}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
-                      <input
-                        type="number"
-                        name="height"
-                        placeholder="Enter height in cm"
-                        value={patientData.height}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">BMI (Auto-calculated)</label>
-                      <input
-                        type="text"
-                        name="bmi"
-                        placeholder="BMI will be calculated automatically"
-                        value={patientData.bmi}
-                        disabled
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Waist (cm)</label>
-                      <input
-                        type="number"
-                        name="height"
-                        placeholder="Enter waist in cm"
-                        value={patientData.waist}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
+                {/* Physical Measurements */}
+<div className="space-y-4">
+  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
+    <FaWeight className="mr-2 text-blue-500" />
+    Physical Measurements
+  </h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">HDL</label>
-                      <input
-                        type="text"
-                        name="hdl"
-                        placeholder="Enter HDL value"
-                        value={patientData.hdl}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">LDL</label>
-                      <input
-                        type="text"
-                        name="ldl"
-                        placeholder="Enter LDL value"
-                        value={patientData.ldl}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
-                </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
+      <input
+        type="number"
+        name="weight"
+        placeholder="Enter weight in kg"
+        value={patientData.weight}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
+      <input
+        type="number"
+        name="height"
+        placeholder="Enter height in cm"
+        value={patientData.height}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
 
-                {/* Test Results */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
-                    <FaFlask className="mr-2 text-green-500" />
-                    Test Results
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure *</label>
-                      <input
-                        type="text"
-                        name="bloodPressure"
-                        placeholder="e.g., 120/80"
-                        value={patientData.bloodPressure}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Hemoglobin</label>
-                      <input
-                        type="text"
-                        name="hemoglobin"
-                        placeholder="Enter hemoglobin level"
-                        value={patientData.hemoglobin}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">BMI (Auto-calculated)</label>
+      <input
+        type="text"
+        name="bmi"
+        placeholder="BMI will be calculated automatically"
+        value={patientData.bmi}
+        disabled
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Waist (cm)</label>
+      <input
+        type="number"
+        name="waist"
+        placeholder="Enter waist in cm"
+        value={patientData.waist}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">WBC</label>
-                      <input
-                        type="text"
-                        name="wbc"
-                        placeholder="Enter WBC count"
-                        value={patientData.wbc}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Platelets</label>
-                      <input
-                        type="text"
-                        name="platelets"
-                        placeholder="Enter platelet count"
-                        value={patientData.platelets}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">HDL</label>
+      <input
+        type="text"
+        name="hdl"
+        placeholder="Enter HDL value"
+        value={patientData.hdl}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">LDL</label>
+      <input
+        type="text"
+        name="ldl"
+        placeholder="Enter LDL value"
+        value={patientData.ldl}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">RBC</label>
-                      <input
-                        type="text"
-                        name="rbc"
-                        placeholder="Enter RBC count"
-                        value={patientData.rbc}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Hematocrit</label>
-                      <input
-                        type="text"
-                        name="hematocrit"
-                        placeholder="Enter hematocrit value"
-                        value={patientData.hematocrit}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Cholesterol</label>
+      <input
+        type="text"
+        name="cholesterol"
+        placeholder="Enter cholesterol value"
+        value={patientData.cholesterol}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">TG</label>
+      <input
+        type="text"
+        name="tg"
+        placeholder="Enter TG value"
+        value={patientData.tg}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Homocysteine</label>
+      <input
+        type="text"
+        name="homocysteine"
+        placeholder="Enter homocysteine value"
+        value={patientData.homocysteine}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Lipoprotein A</label>
+      <input
+        type="text"
+        name="lipoprotein"
+        placeholder="Enter Lipoprotein A value"
+        value={patientData.lipoprotein}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
+</div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">CRP</label>
-                      <input
-                        type="text"
-                        name="crp"
-                        placeholder="Enter CRP value"
-                        value={patientData.crp}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">RBS</label>
-                      <input
-                        type="text"
-                        name="rbs"
-                        placeholder="Enter RBS value"
-                        value={patientData.rbs}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
+{/* Test Results */}
+<div className="space-y-4">
+  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center">
+    <FaFlask className="mr-2 text-green-500" />
+    Test Results
+  </h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">HbA1c</label>
-                      <input
-                        type="text"
-                        name="hba1c"
-                        placeholder="Enter HbA1c value"
-                        value={patientData.hba1c}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Cholesterol</label>
-                      <input
-                        type="text"
-                        name="cholesterol"
-                        placeholder="Enter cholesterol value"
-                        value={patientData.cholesterol}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure *</label>
+      <input
+        type="text"
+        name="bloodPressure"
+        placeholder="e.g., 120/80"
+        value={patientData.bloodPressure}
+        onChange={handleChange}
+        required
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Hemoglobin</label>
+      <input
+        type="text"
+        name="hemoglobin"
+        placeholder="Enter hemoglobin level"
+        value={patientData.hemoglobin}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">TG</label>
-                      <input
-                        type="text"
-                        name="tg"
-                        placeholder="Enter TG value"
-                        value={patientData.tg}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Homocysteine</label>
-                      <input
-                        type="text"
-                        name="homocysteine"
-                        placeholder="Enter homocysteine value"
-                        value={patientData.homocysteine}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                  </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">WBC</label>
+      <input
+        type="text"
+        name="wbc"
+        placeholder="Enter WBC count"
+        value={patientData.wbc}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Platelets</label>
+      <input
+        type="text"
+        name="platelets"
+        placeholder="Enter platelet count"
+        value={patientData.platelets}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
 
-                  <div className="w-full md:w-1/2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Lipoprotein A</label>
-                    <input
-                      type="text"
-                      name="lipoprotein"
-                      placeholder="Enter Lipoprotein A value"
-                      value={patientData.lipoprotein}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    />
-                  </div>
-                </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Hematocrit</label>
+      <input
+        type="text"
+        name="hematocrit"
+        placeholder="Enter hematocrit value"
+        value={patientData.hematocrit}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">CRP</label>
+      <input
+        type="text"
+        name="crp"
+        placeholder="Enter CRP value"
+        value={patientData.crp}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
 
-                {/* Blood Thinner Checkbox */}
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      name="onBloodThinner"
-                      checked={patientData.onBloodThinner}
-                      onChange={handleChange}
-                      className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <label htmlFor="onBloodThinner" className="text-sm font-medium text-gray-900">
-                      Patient is currently on blood thinner medication
-                    </label>
-                  </div>
-                </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">RBS</label>
+      <input
+        type="text"
+        name="rbs"
+        placeholder="Enter RBS value"
+        value={patientData.rbs}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">HbA1c</label>
+      <input
+        type="text"
+        name="hba1c"
+        placeholder="Enter HbA1c value"
+        value={patientData.hba1c}
+        onChange={handleChange}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+      />
+    </div>
+  </div>
+</div>
 
                 {/* Submit Button */}
                 <div className="pt-6">

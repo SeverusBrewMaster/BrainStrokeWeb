@@ -72,7 +72,10 @@ const Login = () => {
   return (
     <div className="login-container">
       <img src={logo} alt="App Logo" className="login-logo" />
-      <h2 className="login-title">Welcome Back</h2>
+      <p className="login-description">
+  Brainline is an initiative by Purva Medical Trust focused on raising awareness about brain stroke prevention. Our mission is rooted in the AAA principle — Awareness, Access, and Affordability — ensuring timely action and informed choices to avoid strokes altogether.
+</p>
+
 
       <select
         className="login-input"
@@ -105,13 +108,13 @@ const Login = () => {
       <button className="login-button" onClick={handleLogin}>
         Login
       </button>
-
+{/* 
       <div className="login-links">
         <Link to="/forgot-password" className="forgot-password">Forgot Password?</Link>
         <p>
           Don’t have an account? <Link to="/SignUp">Sign Up</Link>
         </p>
-      </div>
+      </div> */}
     </div>
   );
 };
