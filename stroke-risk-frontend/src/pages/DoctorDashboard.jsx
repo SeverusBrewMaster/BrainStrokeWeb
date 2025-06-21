@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from '../firebase/firebase'; // ✅ Correct import path
 import { db } from '../firebase/firebase';
 import { 
   FaUserCircle, FaHeartbeat, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaClipboardList, FaExclamationTriangle, FaWeight, FaRulerHorizontal, FaFlask, FaFilePdf, FaWhatsapp, FaTimes, FaCheckCircle,FaInfoCircle, FaExclamationCircle} from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 import logo from '../components/logo1.png';
+import axios from 'axios';
 import './DoctorDashboard.css';
 
 // Add this Modal component after your imports
@@ -359,119 +362,154 @@ const generatePDF = () => {
   };
 
   const sendToWhatsApp = async () => {
- if (!selectedPatient?.phone) {
-  showModal('warning', 'Phone Number Missing', 'Phone number is not available for this patient.');
-  return;
- }
+  if (!selectedPatient?.phone) {
+    alert("Phone number is missing.");
+    return;
+  }
 
   try {
-    setIsSendingWhatsApp(true);
-    
-    let pdfBlob = generatedPDFBlob;
-    
-    // If no PDF is generated yet, generate it first
-    if (!pdfBlob && selectedPatient && selectedAssessment) {
-      // Generate PDF without showing download dialog
-      const patient = selectedPatient;
-      const assessment = selectedAssessment;
-      const riskFactors = extractRiskFactors(patient, assessment);
-      
-      const pdfContainer = document.createElement('div');
-      pdfContainer.style.fontFamily = 'Arial, sans-serif';
-      pdfContainer.style.fontSize = '14px';
-      pdfContainer.style.lineHeight = '1.5';
-      pdfContainer.style.color = '#333';
-      pdfContainer.style.padding = '20px';
-      pdfContainer.style.backgroundColor = 'white';
-      pdfContainer.style.position = 'absolute';
-      pdfContainer.style.top = '-9999px';
-      pdfContainer.style.left = '-9999px';
-      pdfContainer.style.width = '210mm';
+    const patient = selectedPatient;
+    const assessment = selectedAssessment;
+    const riskFactors = extractRiskFactors(patient, assessment);
+    const doctorNote = assessment?.riskAssessment?.recommendations || "No specific recommendations provided at this time.";
+    const timestamp = new Date().toLocaleString();
+    const fileName = `${patient.tokenNumber}_Report_${Date.now()}.pdf`;
 
-      const timestamp = new Date().toLocaleString();
-      
-      // Same PDF content as generatePDF function
-      pdfContainer.innerHTML = `
-        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-          <h2 style="margin: 0; color: #2563eb; font-size: 22px;">Brain Stroke Risk Assessment Report</h2>
-          <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Generated on ${timestamp} | brainline.info</p>
+    // ✅ Create and style PDF content
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
+    pdfContainer.style.fontSize = '14px';
+    pdfContainer.style.lineHeight = '1.5';
+    pdfContainer.style.color = '#333';
+    pdfContainer.style.padding = '20px';
+    pdfContainer.style.backgroundColor = 'white';
+
+    pdfContainer.innerHTML = `
+      <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+        <h2 style="margin: 0; color: #2563eb; font-size: 22px;">Brain Stroke Risk Assessment Report</h2>
+        <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Generated on ${timestamp} | brainline.info</p>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+        <div style="width: 48%;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Patient Information</h3>
+          <table style="width: 100%; font-size: 13px;">
+            <tr><td style="padding: 3px 0;"><strong>Name:</strong></td><td>${patient.name}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Token:</strong></td><td>${patient.tokenNumber}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Age/Gender:</strong></td><td>${patient.age} / ${patient.gender}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Phone:</strong></td><td>${patient.phone}</td></tr>
+            <tr><td style="padding: 3px 0;"><strong>Location:</strong></td><td>${patient.locality}</td></tr>
+          </table>
         </div>
-        <!-- Add the rest of your PDF HTML content here, same as in generatePDF -->
-      `;
 
-      document.body.appendChild(pdfContainer);
+        <div style="width: 48%;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Assessment</h3>
+          <div style="background: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#fef2f2' : '#fff7ed'}; 
+                      border: 2px solid ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'}; 
+                      padding: 15px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="font-size: 18px; font-weight: bold; color: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'};">
+              ${assessment.riskAssessment?.riskCategory || 'N/A'}
+            </div>
+            <div style="font-size: 14px; margin-top: 5px;">Risk Score: ${assessment.riskAssessment?.riskScore || 'N/A'}</div>
+          </div>
+        </div>
+      </div>
 
-      const pdfOptions = {
-        margin: [10, 10, 10, 10],
-        filename: `${patient.name}_Stroke_Risk_Report.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          logging: false
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait'
-        }
-      };
+      <div style="margin-bottom: 15px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
+          ${[
+            { label: 'BP', value: patient.bloodPressure },
+            { label: 'BMI', value: patient.bmi },
+            { label: 'RBS', value: patient.rbs || 'N/A' },
+            { label: 'HbA1c', value: patient.hba1c || 'N/A' },
+            { label: 'Cholesterol', value: patient.cholesterol || 'N/A' },
+            { label: 'HDL/LDL', value: `${patient.hdl}/${patient.ldl}` },
+            { label: 'Hemoglobin', value: patient.hemoglobin || 'N/A' },
+            { label: 'Platelets', value: patient.platelets || 'N/A' }
+          ].map(test => `
+            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+              <div style="font-weight: bold; margin-bottom: 4px;">${test.label}</div>
+              <div>${test.value}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
 
-      pdfBlob = await new Promise((resolve, reject) => {
-        html2pdf()
-          .set(pdfOptions)
-          .from(pdfContainer)
-          .outputPdf('blob')
-          .then((blob) => {
-            resolve(blob);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      });
+      <div style="margin-bottom: 15px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factors</h3>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px;">
+          ${riskFactors.map(factor => `
+            <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 35px;">
+              ${factor}
+            </div>
+          `).join('')}
+        </div>
+      </div>
 
-      document.body.removeChild(pdfContainer);
-      setGeneratedPDFBlob(pdfBlob);
-    }
+      <div style="margin-bottom: 20px;">
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Doctor's Recommendation</h3>
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
+          <div style="width: 100%;">${doctorNote}</div>
+        </div>
+      </div>
 
-    const phoneNumber = selectedPatient.phone.replace(/\D/g, '');
-    
-    // Enhanced message with PDF info
-    const message = encodeURIComponent(
-      `Hello ${selectedPatient.name},
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; text-align: center; font-size: 12px; color: #666;">
+        <p style="margin: 0;">Report generated by <strong>Dr. Ashok Hande</strong></p>
+        <p style="margin: 8px 0 0 0;">For queries, visit: <a href="https://brainline.info/" style="color: #2563eb;">brainline.info</a></p>
+      </div>
+    `;
 
-Your brain stroke risk assessment report has been completed.
+    document.body.appendChild(pdfContainer);
 
-📊 Risk Level: ${selectedAssessment?.riskAssessment?.riskCategory || 'N/A'}
-📋 Risk Score: ${selectedAssessment?.riskAssessment?.riskScore || 'N/A'}
+    // ✅ Generate PDF as a Blob
+    const pdfBlob = await html2pdf()
+      .from(pdfContainer)
+      .set({
+        margin: 10,
+        jsPDF: { format: 'a4' }
+      })
+      .outputPdf('blob');
 
-Please find your detailed medical report attached. We recommend consulting for further evaluation if needed.
+    document.body.removeChild(pdfContainer);
 
-For any questions or to schedule a follow-up, please contact us.
+    // ✅ Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', pdfBlob);
+    formData.append('upload_preset', 'unsigned_pdf');
+    formData.append('public_id', fileName.replace('.pdf', ''));
 
-Best regards,
-Dr. Ashok Hande
-Visit: brainline.info`
+    const uploadRes = await axios.post(
+      'https://api.cloudinary.com/v1_1/dcyyf8odw/raw/upload',
+      formData
     );
 
-    // Open WhatsApp with message
-    const whatsappUrl = `https://wa.me/91${phoneNumber}?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-    
-    // Note: Unfortunately, WhatsApp Web doesn't support direct file uploads via URL
-    // The user will need to manually attach the PDF after the chat opens
-    // You could provide instructions or implement a file sharing service
-    
-    setTimeout(() => {
-  showModal('success', 'WhatsApp Message Sent', 'WhatsApp opened with message. Note: You\'ll need to manually attach the PDF file from your downloads folder.');
-}, 1000);
-    
+    // ✅ Generate downloadable link
+    const downloadURL = uploadRes.data.secure_url + `?fl_attachment=${fileName}`;
+
+    // ✅ Open WhatsApp with link
+    const phone = patient.phone.replace(/\D/g, '');
+    const message = encodeURIComponent(`
+Hello ${patient.name},
+
+Your brain stroke risk report has been generated. 🧠
+
+📊 Risk Level: ${assessment?.riskAssessment?.riskCategory || 'N/A'}
+📋 Risk Score: ${assessment?.riskAssessment?.riskScore || 'N/A'}
+
+📥 Download your report:
+${downloadURL}
+
+Stay healthy,
+Dr. Ashok Hande
+brainline.info
+    `);
+
+    window.open(`https://wa.me/91${phone}?text=${message}`, '_blank');
+
   } catch (error) {
-  console.error('Error sending to WhatsApp:', error);
-  showModal('error', 'WhatsApp Error', 'Failed to prepare WhatsApp message. Please try again.');
-} finally {
-    setIsSendingWhatsApp(false);
+    console.error("Failed to generate/send report:", error);
+    alert("Something went wrong. Please try again.");
   }
 };
 

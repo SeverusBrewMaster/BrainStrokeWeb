@@ -12,6 +12,8 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from './config';
+import { initializeApp } from 'firebase/app';
+export const storage = getStorage(app);
 
 // Collection names
 export const COLLECTIONS = {
