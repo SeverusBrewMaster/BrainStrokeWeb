@@ -297,7 +297,7 @@ const MiddlemanDashboard = () => {
     if (bmiNum > 30) score += 1; // BMI >30
     if (tiaHistory === 'yes') score += 2; // History of TIA
     if (sleepNum < 6) score += 1; // Sleep deprivation
-    if (aqiNum > 200) score += 1; // Air pollution
+    if (aqiNum > 150) score += 1; // Air pollution
     if (familyHistory === 'yes') score += 2; // Family history
 
     let category = '';
@@ -769,7 +769,7 @@ const handleSaveAfterAssessment = async () => {
                 </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">MiddleMan Dashboard</h1>
+                <h1 className="text-xl font-bold text-gray-900">Medical Officer Dashboard</h1>
                 <p className="text-sm text-gray-500">Patient Management System</p>
               </div>
             </div>
@@ -1045,15 +1045,12 @@ const handleSaveAfterAssessment = async () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <RadioGroup
-                        label="Stress Level (PSS Scale 0-4)"
+                        label="Do you have Stress?"
                         value={stressLevel}
                         onChange={setStressLevel}
                         options={[
-                          { value: '0', label: '0 - No stress' },
-                          { value: '1', label: '1 - Low stress' },
-                          { value: '2', label: '2 - Moderate stress' },
-                          { value: '3', label: '3 - High stress' },
-                          { value: '4', label: '4 - Very high stress' }
+                          { value: 'yes', label: 'Yes' },
+                          { value: 'no', label: 'No' }
                         ]}
                       />
 
@@ -1091,26 +1088,6 @@ const handleSaveAfterAssessment = async () => {
                       />
 
                       <RadioGroup
-                        label="Diabetes"
-                        value={diabetes}
-                        onChange={setDiabetes}
-                        options={[
-                          { value: 'yes', label: 'Yes' },
-                          { value: 'no', label: 'No' }
-                        ]}
-                      />
-
-                      <RadioGroup
-                        label="High Cholesterol"
-                        value={cholesterol}
-                        onChange={setCholesterol}
-                        options={[
-                          { value: 'yes', label: 'Yes' },
-                          { value: 'no', label: 'No' }
-                        ]}
-                      />
-
-                      <RadioGroup
                         label="Irregular Heartbeats"
                         value={irregularHeartbeat}
                         onChange={setIrregularHeartbeat}
@@ -1129,17 +1106,6 @@ const handleSaveAfterAssessment = async () => {
                           { value: 'no', label: 'No' }
                         ]}
                       />
-
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Random Blood Sugar</label>
-                        <input
-                          type="number"
-                          value={rnddiabetesNum}
-                          onChange={(e) => setRnddiabetesNum(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Enter sugar level"
-                        />
-                      </div>
                     </div>
 
                     {/* TIA History - NEW SECTION */}
