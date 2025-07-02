@@ -4,7 +4,11 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../firebase/firebase'; // ✅ Correct import path
 import { db } from '../firebase/firebase';
 import { 
-  FaUserCircle, FaHeartbeat, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaClipboardList, FaExclamationTriangle, FaWeight, FaRulerHorizontal, FaFlask, FaFilePdf, FaWhatsapp, FaTimes, FaCheckCircle,FaInfoCircle, FaExclamationCircle} from "react-icons/fa";
+  FaUserCircle, FaHeartbeat, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, 
+  FaClipboardList, FaExclamationTriangle, FaWeight, FaRulerHorizontal, 
+  FaFlask, FaFilePdf, FaWhatsapp, FaTimes, FaCheckCircle, FaInfoCircle, 
+  FaExclamationCircle, FaSearch // ADD THIS
+} from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 import logo from '../components/logo1.png';
 import axios from 'axios';
@@ -107,8 +111,9 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-const [generatedPDFBlob, setGeneratedPDFBlob] = useState(null);
-const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+  const [generatedPDFBlob, setGeneratedPDFBlob] = useState(null);
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // ADD THESE NEW STATE VARIABLES FOR MODAL
   const [modalConfig, setModalConfig] = useState({
@@ -964,7 +969,19 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
     fetchPatientsWithAssessments();
   }, []);
 
-  const filteredPatients = patients.filter(isHighOrModerateRisk);
+  const filteredPatients = patients
+  .filter(isHighOrModerateRisk)
+  .filter(patient => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      patient.name?.toLowerCase().includes(searchLower) ||
+      patient.tokenNumber?.toLowerCase().includes(searchLower) ||
+      patient.phone?.includes(searchTerm) ||
+      patient.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
 
   // Show loading state
   if (loading) {
@@ -1001,7 +1018,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
   <>
     {/* Tailwind CSS CDN */}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
-    {/* <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/4.0.4/colors.min.js" rel="stylesheet" /> */}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/4.0.4/colors.min.js" rel="stylesheet" />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Navigation Bar */}
       <div className="bg-white shadow-lg border-b border-gray-200">
@@ -1034,13 +1051,45 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
               <FaExclamationTriangle className="text-red-500 mr-3" />
               High/Moderate Risk Patients ({filteredPatients.length})
             </h1>
+            
+            {/* ADD THIS SEARCH BOX */}
+            <div className="mt-4 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by name, token, phone, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <FaTimes className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                </button>
+              )}
+            </div>
           </div>
           
           <div className="p-4 space-y-4">
             {filteredPatients.length === 0 ? (
               <div className="text-center py-8">
                 <FaClipboardList className="text-gray-400 text-4xl mx-auto mb-4" />
-                <p className="text-gray-600">No high/moderate risk patients found</p>
+                <p className="text-gray-600">
+                  {searchTerm ? 'No patients found matching your search' : 'No high/moderate risk patients found'}
+                </p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm underline"
+                  >
+                    Clear search
+                  </button>
+                )}
               </div>
             ) : (
               filteredPatients.map(patient => {
