@@ -187,39 +187,78 @@ const DoctorDashboard = () => {
     return score >= 5;
   };
 
+  // const extractRiskFactors = (patient, assessment) => {
+  //   const contributing = [];
+  //   const age = Number(patient.age);
+  //   const bmi = Number(patient.bmi);
+  //   const hba1c = Number(assessment.hba1c);
+  //   const rbs = Number(assessment.rbs);
+  //   const cholesterol = Number(assessment.cholesterol);
+  //   const ldl = Number(patient.ldl);
+  //   const hdl = Number(patient.hdl);
+  //   const aqi = Number(patient.aqi);
+  //   const sleep = Number(assessment.sleepHours);
+  //   const stress = Number(assessment.stressLevel);
+  //   const bp = patient.bloodPressure?.split('/');
+  //   const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
+  //   const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
+
+  //   if (assessment.smoke === 'yes') contributing.push("Smoking/Tobacco");
+  //   if (systolic > 140 || diastolic > 90) contributing.push("High Blood Pressure");
+  //   if (age > 60) contributing.push("Age > 60");
+  //   if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.push("Alcohol abuse");
+  //   if (assessment.irregularHeartbeat === 'yes') contributing.push("Atrial Fibrillation");
+  //   if (assessment.diabetes === 'yes' || rbs > 160 || hba1c > 6.5) contributing.push("Diabetes");
+  //   if (cholesterol > 200 || ldl > 100 || hdl < 60) contributing.push("Abnormal Lipid Profile");
+  //   if (stress >= 3) contributing.push("High Stress");
+  //   if (assessment.exercise === 'no') contributing.push("Lack of Exercise");
+  //   if (bmi > 30) contributing.push("High BMI");
+  //   if (assessment.tiaHistory === 'yes') contributing.push("History of TIA");
+  //   if (sleep < 6) contributing.push("Sleep Deprivation");
+  //   if (aqi > 200) contributing.push("Poor Air Quality");
+  //   if (assessment.familyHistory === 'yes') contributing.push("Family History");
+
+  //   return contributing;
+  // };
   const extractRiskFactors = (patient, assessment) => {
-    const contributing = [];
-    const age = Number(patient.age);
-    const bmi = Number(patient.bmi);
-    const hba1c = Number(assessment.hba1c);
-    const rbs = Number(assessment.rbs);
-    const cholesterol = Number(assessment.cholesterol);
-    const ldl = Number(patient.ldl);
-    const hdl = Number(patient.hdl);
-    const aqi = Number(patient.aqi);
-    const sleep = Number(assessment.sleepHours);
-    const stress = Number(assessment.stressLevel);
-    const bp = patient.bloodPressure?.split('/');
-    const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
-    const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
-
-    if (assessment.smoke === 'yes') contributing.push("Smoking/Tobacco");
-    if (systolic > 140 || diastolic > 90) contributing.push("High Blood Pressure");
-    if (age > 60) contributing.push("Age > 60");
-    if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.push("Alcohol abuse");
-    if (assessment.irregularHeartbeat === 'yes') contributing.push("Atrial Fibrillation");
-    if (assessment.diabetes === 'yes' || rbs > 160 || hba1c > 6.5) contributing.push("Diabetes");
-    if (cholesterol > 200 || ldl > 100 || hdl < 60) contributing.push("Abnormal Lipid Profile");
-    if (stress >= 3) contributing.push("High Stress");
-    if (assessment.exercise === 'no') contributing.push("Lack of Exercise");
-    if (bmi > 30) contributing.push("High BMI");
-    if (assessment.tiaHistory === 'yes') contributing.push("History of TIA");
-    if (sleep < 6) contributing.push("Sleep Deprivation");
-    if (aqi > 200) contributing.push("Poor Air Quality");
-    if (assessment.familyHistory === 'yes') contributing.push("Family History");
-
-    return contributing;
+  const contributing = {
+    Clinical: [],
+    Lifestyle: [],
+    Background: []
   };
+
+  const age = Number(patient.age);
+  const bmi = Number(patient.bmi);
+  const hba1c = Number(assessment.hba1c);
+  const rbs = Number(assessment.rbs);
+  const cholesterol = Number(assessment.cholesterol);
+  const ldl = Number(patient.ldl);
+  const hdl = Number(patient.hdl);
+  const aqi = Number(patient.aqi);
+  const sleep = Number(assessment.sleepHours);
+  const stress = Number(assessment.stressLevel);
+  const bp = patient.bloodPressure?.split('/');
+  const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
+  const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
+
+  if (assessment.smoke === 'yes') contributing.Lifestyle.push("Smoking/Tobacco");
+  if (systolic > 140 || diastolic > 90) contributing.Clinical.push("High Blood Pressure");
+  if (age > 60) contributing.Background.push("Age > 60");
+  if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.Lifestyle.push("Alcohol Abuse");
+  if (assessment.irregularHeartbeat === 'yes') contributing.Clinical.push("Atrial Fibrillation");
+  if (assessment.diabetes === 'yes' || rbs > 160 || hba1c > 6.5) contributing.Clinical.push("Diabetes");
+  if (cholesterol > 200 || ldl > 100 || hdl < 60) contributing.Clinical.push("Abnormal Lipid Profile");
+  if (stress >= 3) contributing.Lifestyle.push("High Stress");
+  if (assessment.exercise === 'no') contributing.Lifestyle.push("Lack of Exercise");
+  if (bmi > 30) contributing.Lifestyle.push("High BMI");
+  if (assessment.tiaHistory === 'yes') contributing.Clinical.push("History of TIA");
+  if (sleep < 6) contributing.Lifestyle.push("Sleep Deprivation");
+  if (aqi > 200) contributing.Background.push("Poor Air Quality");
+  if (assessment.familyHistory === 'yes') contributing.Background.push("Family History");
+
+  return contributing;
+};
+
 
   const handlePatientSelect = (patient) => {
     setSelectedPatient(patient);
@@ -1018,7 +1057,6 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
   <>
     {/* Tailwind CSS CDN */}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/4.0.4/colors.min.js" rel="stylesheet" />
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Navigation Bar */}
       <div className="bg-white shadow-lg border-b border-gray-200">
@@ -1297,26 +1335,82 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
                 </div>
 
                 {/* Risk Factors */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-red-200">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <FaExclamationTriangle className="text-red-500 mr-3" />
-                    Contributing Risk Factors
-                  </h3>
-                  <div className="space-y-2">
-                    {extractRiskFactors(selectedPatient, selectedAssessment).map((factor, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-3 bg-orange-50 border border-red-200 rounded-lg">
-                        <svg
-                          className="w-4 h-4 text-red-600"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M10 5l6 10H4l6-10z" />
-                        </svg>
-                        <span className="text-gray-800">{factor}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                {/* Categorized Contributing Risk Factors */}
+<div className="space-y-6">
+  {/* Clinical Risk Factors */}
+  <div className="bg-red-100 rounded-xl shadow-lg p-6 border border-red-300">
+    <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center">
+      <FaExclamationTriangle className="text-red-500 mr-3" />
+      Clinical Risk Factors
+    </h3>
+    <div className="space-y-2">
+      {extractRiskFactors(selectedPatient, selectedAssessment).Clinical?.map((factor, index) => (
+        <div key={index} className="flex items-center space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 5l6 10H4l6-10z" />
+          </svg>
+          <span className="text-gray-800">{factor}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {/* Lifestyle Risk Factors */}
+  <div
+  className="rounded-xl shadow-lg p-6 border"
+  style={{ backgroundColor: "#FFEDD5", borderColor: "#FDBA74" }} // orange-100 bg, orange-300 border
+>
+  <h3
+    className="text-xl font-bold mb-4 flex items-center"
+    style={{ color: "#C2410C" }} // orange-700
+  >
+    <FaExclamationTriangle style={{ color: "#F97316" }} className="mr-3" /> {/* orange-500 */}
+    Lifestyle Risk Factors
+  </h3>
+  <div className="space-y-2">
+    {extractRiskFactors(selectedPatient, selectedAssessment).Lifestyle?.map((factor, index) => (
+      <div
+        key={index}
+        className="flex items-center space-x-3 p-3 rounded-lg border"
+        style={{
+          backgroundColor: "#FFFBEB", // orange-50
+          borderColor: "#FED7AA",     // orange-200
+        }}
+      >
+        <svg
+          className="w-4 h-4"
+          style={{ color: "#EA580C" }} // orange-600
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path d="M10 5l6 10H4l6-10z" />
+        </svg>
+        <span className="text-gray-800">{factor}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+
+  {/* Background Risk Factors */}
+  <div className="bg-yellow-100 rounded-xl shadow-lg p-6 border border-yellow-300">
+    <h3 className="text-xl font-bold text-yellow-700 mb-4 flex items-center">
+      <FaExclamationTriangle className="text-yellow-500 mr-3" />
+      Background / Environmental Risk Factors
+    </h3>
+    <div className="space-y-2">
+      {extractRiskFactors(selectedPatient, selectedAssessment).Background?.map((factor, index) => (
+        <div key={index} className="flex items-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 5l6 10H4l6-10z" />
+          </svg>
+          <span className="text-gray-800">{factor}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
               </div>
 
               {/* Doctor's Recommendation */}
