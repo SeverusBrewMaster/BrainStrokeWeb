@@ -495,7 +495,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
           if (hasValidData && chart1Image && chart2Image) {
             chartSectionHTML = `
               <div style="margin-bottom: 20px; page-break-inside: avoid;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factor Analysis</h3>
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
                 <div style="display: flex; justify-content: space-between; gap: 20px;">
                   <div style="width: 48%; text-align: center;">
                     <img src="${chart1Image}" style="width: 100%; max-width: 300px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px;" alt="Risk Factors by Category">
@@ -513,7 +513,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
           } else {
             chartSectionHTML = `
               <div style="margin-bottom: 20px; page-break-inside: avoid;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factor Analysis</h3>
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
                 <div style="background: #f9fafb; border: 2px dashed #d1d5db; padding: 30px; text-align: center; border-radius: 8px;">
                   <p style="margin: 0; font-size: 14px; color: #6b7280;">
                     <strong>No significant risk factors detected</strong><br>
@@ -547,7 +547,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
 
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
               <div style="width: 48%;">
-                <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Patient Information</h3>
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Patient Information</h3>
                 <table style="width: 100%; font-size: 13px;">
                   <tr><td style="padding: 3px 0;"><strong>Name:</strong></td><td>${patient.name}</td></tr>
                   <tr><td style="padding: 3px 0;"><strong>Token:</strong></td><td>${patient.tokenNumber}</td></tr>
@@ -558,7 +558,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
               </div>
 
               <div style="width: 48%;">
-                <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Assessment</h3>
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Assessment</h3>
                 <div style="background: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#fef2f2' : '#fff7ed'}; 
                             border: 2px solid ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'}; 
                             padding: 15px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -571,7 +571,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
             </div>
 
             <div style="margin-bottom: 15px;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
               <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
                 <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
                   <div style="font-weight: bold; margin-bottom: 4px;">BP</div>
@@ -614,7 +614,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
             <div style="page-break-before: always;"></div>
 
             <div style="margin-bottom: 15px; page-break-inside: avoid;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factors</h3>
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factors</h3>
               <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px;">
                 ${riskFactors.map(factor => `
                   <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 35px;">
@@ -625,7 +625,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
             </div>
                 
             <div style="margin-bottom: 20px; page-break-inside: avoid;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Doctor's Recommendation</h3>
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Doctor's Recommendation</h3>
               <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
                 <div style="width: 100%;">${doctorNote || 'No specific recommendations provided at this time.'}</div>
               </div>
@@ -725,7 +725,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
       if (hasValidData && chart1Image && chart2Image) {
         chartSectionHTML = `
           <div style="margin-bottom: 20px; page-break-inside: avoid;">
-            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factor Analysis</h3>
+            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
             <div style="display: flex; justify-content: space-between; gap: 20px;">
               <div style="width: 48%; text-align: center;">
                 <img src="${chart1Image}" style="width: 100%; max-width: 300px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px;" alt="Risk Factors by Category">
@@ -743,7 +743,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
       } else {
         chartSectionHTML = `
           <div style="margin-bottom: 20px; page-break-inside: avoid;">
-            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factor Analysis</h3>
+            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
             <div style="background: #f9fafb; border: 2px dashed #d1d5db; padding: 30px; text-align: center; border-radius: 8px;">
               <p style="margin: 0; font-size: 14px; color: #6b7280;">
                 <strong>No significant risk factors detected</strong><br>
@@ -777,7 +777,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
 
         <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
           <div style="width: 48%;">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Patient Information</h3>
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Patient Information</h3>
             <table style="width: 100%; font-size: 13px;">
               <tr><td style="padding: 3px 0;"><strong>Name:</strong></td><td>${patient.name}</td></tr>
               <tr><td style="padding: 3px 0;"><strong>Token:</strong></td><td>${patient.tokenNumber}</td></tr>
@@ -788,7 +788,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
           </div>
 
           <div style="width: 48%;">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Assessment</h3>
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Assessment</h3>
             <div style="background: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#fef2f2' : '#fff7ed'}; 
                         border: 2px solid ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'}; 
                         padding: 15px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -801,7 +801,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
         </div>
 
         <div style="margin-bottom: 15px;">
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
             <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
               <div style="font-weight: bold; margin-bottom: 4px;">BP</div>
@@ -844,7 +844,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
         <div style="page-break-before: always;"></div>
 
         <div style="margin-bottom: 15px; page-break-inside: avoid;">
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Risk Factors</h3>
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factors</h3>
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px;">
             ${riskFactors.map(factor => `
               <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 35px;">
@@ -855,7 +855,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
         </div>
             
         <div style="margin-bottom: 20px; page-break-inside: avoid;">
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px;">Doctor's Recommendation</h3>
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Doctor's Recommendation</h3>
           <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
             <div style="width: 100%;">${note}</div>
           </div>
