@@ -187,78 +187,44 @@ const DoctorDashboard = () => {
     return score >= 5;
   };
 
-  // const extractRiskFactors = (patient, assessment) => {
-  //   const contributing = [];
-  //   const age = Number(patient.age);
-  //   const bmi = Number(patient.bmi);
-  //   const hba1c = Number(assessment.hba1c);
-  //   const rbs = Number(assessment.rbs);
-  //   const cholesterol = Number(assessment.cholesterol);
-  //   const ldl = Number(patient.ldl);
-  //   const hdl = Number(patient.hdl);
-  //   const aqi = Number(patient.aqi);
-  //   const sleep = Number(assessment.sleepHours);
-  //   const stress = Number(assessment.stressLevel);
-  //   const bp = patient.bloodPressure?.split('/');
-  //   const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
-  //   const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
-
-  //   if (assessment.smoke === 'yes') contributing.push("Smoking/Tobacco");
-  //   if (systolic > 140 || diastolic > 90) contributing.push("High Blood Pressure");
-  //   if (age > 60) contributing.push("Age > 60");
-  //   if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.push("Alcohol abuse");
-  //   if (assessment.irregularHeartbeat === 'yes') contributing.push("Atrial Fibrillation");
-  //   if (assessment.diabetes === 'yes' || rbs > 160 || hba1c > 6.5) contributing.push("Diabetes");
-  //   if (cholesterol > 200 || ldl > 100 || hdl < 60) contributing.push("Abnormal Lipid Profile");
-  //   if (stress >= 3) contributing.push("High Stress");
-  //   if (assessment.exercise === 'no') contributing.push("Lack of Exercise");
-  //   if (bmi > 30) contributing.push("High BMI");
-  //   if (assessment.tiaHistory === 'yes') contributing.push("History of TIA");
-  //   if (sleep < 6) contributing.push("Sleep Deprivation");
-  //   if (aqi > 200) contributing.push("Poor Air Quality");
-  //   if (assessment.familyHistory === 'yes') contributing.push("Family History");
-
-  //   return contributing;
-  // };
   const extractRiskFactors = (patient, assessment) => {
-  const contributing = {
-    Clinical: [],
-    Lifestyle: [],
-    Background: []
+    const contributing = {
+      Clinical: [],
+      Lifestyle: [],
+      Background: []
+    };
+
+    const age = Number(patient.age);
+    const bmi = Number(patient.bmi);
+    const hba1c = Number(assessment.hba1c);
+    const rbs = Number(assessment.rbs);
+    const cholesterol = Number(assessment.cholesterol);
+    const ldl = Number(patient.ldl);
+    const hdl = Number(patient.hdl);
+    const aqi = Number(patient.aqi);
+    const sleep = Number(assessment.sleepHours);
+    const stress = Number(assessment.stressLevel);
+    const bp = patient.bloodPressure?.split('/');
+    const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
+    const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
+
+    if (assessment.smoke === 'yes') contributing.Lifestyle.push("Smoking/Tobacco");
+    if (systolic > 140 || diastolic > 90) contributing.Clinical.push("High Blood Pressure");
+    if (age > 60) contributing.Background.push("Age > 60");
+    if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.Lifestyle.push("Alcohol Abuse");
+    if (assessment.irregularHeartbeat === 'yes') contributing.Clinical.push("Atrial Fibrillation");
+    if (assessment.diabetes === 'yes' || rbs > 160 || hba1c > 6.5) contributing.Clinical.push("Diabetes");
+    if (cholesterol > 200 || ldl > 100 || hdl < 60) contributing.Clinical.push("Abnormal Lipid Profile");
+    if (stress >= 3) contributing.Lifestyle.push("High Stress");
+    if (assessment.exercise === 'no') contributing.Lifestyle.push("Lack of Exercise");
+    if (bmi > 30) contributing.Lifestyle.push("High BMI");
+    if (assessment.tiaHistory === 'yes') contributing.Clinical.push("History of TIA");
+    if (sleep < 6) contributing.Lifestyle.push("Sleep Deprivation");
+    if (aqi > 200) contributing.Background.push("Poor Air Quality");
+    if (assessment.familyHistory === 'yes') contributing.Background.push("Family History");
+
+    return contributing;
   };
-
-  const age = Number(patient.age);
-  const bmi = Number(patient.bmi);
-  const hba1c = Number(assessment.hba1c);
-  const rbs = Number(assessment.rbs);
-  const cholesterol = Number(assessment.cholesterol);
-  const ldl = Number(patient.ldl);
-  const hdl = Number(patient.hdl);
-  const aqi = Number(patient.aqi);
-  const sleep = Number(assessment.sleepHours);
-  const stress = Number(assessment.stressLevel);
-  const bp = patient.bloodPressure?.split('/');
-  const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
-  const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
-
-  if (assessment.smoke === 'yes') contributing.Lifestyle.push("Smoking/Tobacco");
-  if (systolic > 140 || diastolic > 90) contributing.Clinical.push("High Blood Pressure");
-  if (age > 60) contributing.Background.push("Age > 60");
-  if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.Lifestyle.push("Alcohol Abuse");
-  if (assessment.irregularHeartbeat === 'yes') contributing.Clinical.push("Atrial Fibrillation");
-  if (assessment.diabetes === 'yes' || rbs > 160 || hba1c > 6.5) contributing.Clinical.push("Diabetes");
-  if (cholesterol > 200 || ldl > 100 || hdl < 60) contributing.Clinical.push("Abnormal Lipid Profile");
-  if (stress >= 3) contributing.Lifestyle.push("High Stress");
-  if (assessment.exercise === 'no') contributing.Lifestyle.push("Lack of Exercise");
-  if (bmi > 30) contributing.Lifestyle.push("High BMI");
-  if (assessment.tiaHistory === 'yes') contributing.Clinical.push("History of TIA");
-  if (sleep < 6) contributing.Lifestyle.push("Sleep Deprivation");
-  if (aqi > 200) contributing.Background.push("Poor Air Quality");
-  if (assessment.familyHistory === 'yes') contributing.Background.push("Family History");
-
-  return contributing;
-};
-
 
   const handlePatientSelect = (patient) => {
     setSelectedPatient(patient);
@@ -266,252 +232,267 @@ const DoctorDashboard = () => {
     setDoctorNote('');
   };
 
-const generateChartImages = async (patient, assessment, riskFactors) => {
-  // Function to categorize risk factors
-  const categorizeRiskFactors = (riskFactors) => {
-    const categories = {
-      Clinical: [],
-      Lifestyle: [],
-      Background: []
-    };
-
-    const clinicalFactors = ['Hypertension', 'Diabetes', 'High Cholesterol', 'Heart Disease', 'Atrial Fibrillation', 'Previous Stroke/TIA', 'Carotid Artery Disease'];
-    const lifestyleFactors = ['Smoking', 'Physical Inactivity', 'Obesity', 'Excessive Alcohol', 'Poor Diet'];
-    const backgroundFactors = ['Age > 65', 'Male Gender', 'Family History', 'Race/Ethnicity'];
-
-    riskFactors.forEach(factor => {
-      if (clinicalFactors.some(cf => factor.toLowerCase().includes(cf.toLowerCase()))) {
-        categories.Clinical.push(factor);
-      } else if (lifestyleFactors.some(lf => factor.toLowerCase().includes(lf.toLowerCase()))) {
-        categories.Lifestyle.push(factor);
-      } else {
-        categories.Background.push(factor);
-      }
-    });
-
-    return categories;
-  };
-
-  // Function to assign impact scores to risk factors
-  const getRiskFactorImpacts = (riskFactors) => {
-    const impactMap = {
-      'Hypertension': 4,
-      'Diabetes': 3,
-      'Smoking': 4,
-      'Atrial Fibrillation': 4,
-      'Previous Stroke/TIA': 4,
-      'Age > 65': 3,
-      'High Cholesterol': 3,
-      'Heart Disease': 3,
-      'Physical Inactivity': 2,
-      'Obesity': 2,
-      'Family History': 2,
-      'Excessive Alcohol': 2,
-      'Male Gender': 1,
-      'Poor Diet': 2,
-      'Carotid Artery Disease': 3
-    };
-
-    return riskFactors.map(factor => {
-      // Find matching impact score
-      const matchingKey = Object.keys(impactMap).find(key => 
-        factor.toLowerCase().includes(key.toLowerCase())
-      );
-      return {
-        factor: factor,
-        impact: matchingKey ? impactMap[matchingKey] : 1
+  const generateChartImages = async (patient, assessment, riskFactors) => {
+    // Function to categorize risk factors - using EXACT same categories as extractRiskFactors
+    const categorizeRiskFactors = (riskFactors) => {
+      const categories = {
+        Clinical: [],
+        Lifestyle: [],
+        Background: []
       };
-    }).filter(item => item.impact > 0); // Filter out risk factors with 0 impact score
-  };
 
-  const riskFactorImpacts = getRiskFactorImpacts(riskFactors);
-  const filteredRiskFactors = riskFactorImpacts.map(item => item.factor);
-  const categories = categorizeRiskFactors(filteredRiskFactors);
+      // Define the exact factors from extractRiskFactors function
+      const clinicalFactors = [
+        'High Blood Pressure', 
+        'Atrial Fibrillation', 
+        'Diabetes', 
+        'Abnormal Lipid Profile', 
+        'History of TIA'
+      ];
 
-  if (riskFactorImpacts.length === 0) {
-    return {
-      chart1Image: null,
-      chart2Image: null,
-      message: "No risk factors with impact scores greater than 0 found."
+      const lifestyleFactors = [
+        'Smoking/Tobacco', 
+        'Alcohol Abuse', 
+        'High Stress', 
+        'Lack of Exercise', 
+        'High BMI', 
+        'Sleep Deprivation'
+      ];
+
+      const backgroundFactors = [
+        'Age > 60', 
+        'Poor Air Quality', 
+        'Family History'
+      ];
+
+      riskFactors.forEach(factor => {
+        if (clinicalFactors.includes(factor)) {
+          categories.Clinical.push(factor);
+        } else if (lifestyleFactors.includes(factor)) {
+          categories.Lifestyle.push(factor);
+        } else if (backgroundFactors.includes(factor)) {
+          categories.Background.push(factor);
+        }
+      });
+
+      return categories;
     };
-  }
 
-  // Create canvas elements with explicit styling
-  const canvas1 = document.createElement('canvas');
-  const canvas2 = document.createElement('canvas');
-  canvas1.width = 400;
-  canvas1.height = 400;
-  canvas2.width = 400;
-  canvas2.height = 400;
-  
-  // IMPORTANT: Set canvas background to white
-  const ctx1 = canvas1.getContext('2d');
-  const ctx2 = canvas2.getContext('2d');
-  
-  // Fill canvas with white background before creating charts
-  ctx1.fillStyle = 'white';
-  ctx1.fillRect(0, 0, canvas1.width, canvas1.height);
-  ctx2.fillStyle = 'white';
-  ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+    // Function to assign impact scores to risk factors - using EXACT factor names
+    const getRiskFactorImpacts = (riskFactors) => {
+      const impactMap = {
+        'High Blood Pressure': 3,
+        'Diabetes': 2,
+        'Smoking/Tobacco': 1,
+        'Atrial Fibrillation': 2,
+        'History of TIA': 2,
+        'Age > 60': 1,
+        'Abnormal Lipid Profile': 2,
+        'Lack of Exercise': 1,
+        'High BMI': 1,
+        'Family History': 2,
+        'Alcohol Abuse': 1,
+        'High Stress': 1,
+        'Sleep Deprivation': 1,
+        'Poor Air Quality': 1
+      };
 
-  // Build category data arrays simultaneously
-  const categoryData = [];
-  const categoryLabels = [];
-  const categoryColors = [];
-  
-  if (categories.Clinical.length > 0) {
-    categoryData.push(categories.Clinical.length);
-    categoryLabels.push('Clinical');
-    categoryColors.push('#dc2626');
-  }
-  if (categories.Lifestyle.length > 0) {
-    categoryData.push(categories.Lifestyle.length);
-    categoryLabels.push('Lifestyle');
-    categoryColors.push('#f59e0b');
-  }
-  if (categories.Background.length > 0) {
-    categoryData.push(categories.Background.length);
-    categoryLabels.push('Background');
-    categoryColors.push('#2563eb');
-  }
+      return riskFactors.map(factor => {
+        return {
+          factor: factor,
+          impact: impactMap[factor] || 1 // Default to 1 if not found
+        };
+      }).filter(item => item.impact > 0); // Filter out risk factors with 0 impact score
+    };
 
-  let chart1 = null;
-  if (categoryData.length > 0) {
-    chart1 = new Chart(ctx1, {
-      type: 'pie',
-      data: {
-        labels: categoryLabels,
-        datasets: [{
-          data: categoryData,
-          backgroundColor: categoryColors,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: false,
-        maintainAspectRatio: true,
-        animation: {
-          duration: 0 // Disable animations for cleaner export
+    const riskFactorImpacts = getRiskFactorImpacts(riskFactors);
+    const filteredRiskFactors = riskFactorImpacts.map(item => item.factor);
+    const categories = categorizeRiskFactors(filteredRiskFactors);
+
+    if (riskFactorImpacts.length === 0) {
+      return {
+        chart1Image: null,
+        chart2Image: null,
+        message: "No risk factors with impact scores greater than 0 found."
+      };
+    }
+
+    // Create canvas elements with explicit styling
+    const canvas1 = document.createElement('canvas');
+    const canvas2 = document.createElement('canvas');
+    canvas1.width = 400;
+    canvas1.height = 400;
+    canvas2.width = 400;
+    canvas2.height = 400;
+
+    // IMPORTANT: Set canvas background to white
+    const ctx1 = canvas1.getContext('2d');
+    const ctx2 = canvas2.getContext('2d');
+
+    // Fill canvas with white background before creating charts
+    ctx1.fillStyle = 'white';
+    ctx1.fillRect(0, 0, canvas1.width, canvas1.height);
+    ctx2.fillStyle = 'white';
+    ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+
+    // Build category data arrays simultaneously
+    const categoryData = [];
+    const categoryLabels = [];
+    const categoryColors = [];
+
+    if (categories.Clinical.length > 0) {
+      categoryData.push(categories.Clinical.length);
+      categoryLabels.push('Clinical');
+      categoryColors.push('#dc2626');
+    }
+    if (categories.Lifestyle.length > 0) {
+      categoryData.push(categories.Lifestyle.length);
+      categoryLabels.push('Lifestyle');
+      categoryColors.push('#f59e0b');
+    }
+    if (categories.Background.length > 0) {
+      categoryData.push(categories.Background.length);
+      categoryLabels.push('Background');
+      categoryColors.push('#2563eb');
+    }
+
+    let chart1 = null;
+    if (categoryData.length > 0) {
+      chart1 = new Chart(ctx1, {
+        type: 'pie',
+        data: {
+          labels: categoryLabels,
+          datasets: [{
+            data: categoryData,
+            backgroundColor: categoryColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
         },
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
+        options: {
+          responsive: false,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 0 // Disable animations for cleaner export
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: {
+                  size: 14
+                },
+                padding: 20
+              }
+            },
+            title: {
+              display: true,
+              text: 'Risk Factors by Category',
               font: {
-                size: 14
+                size: 16,
+                weight: 'bold'
               },
               padding: 20
             }
-          },
-          title: {
-            display: true,
-            text: 'Risk Factors by Category',
-            font: {
-              size: 16,
-              weight: 'bold'
-            },
-            padding: 20
           }
         }
-      }
+      });
+    }
+
+    // Chart 2: Risk Factor Impact Scores
+    const impactLabels = riskFactorImpacts.map(item => item.factor);
+    const impactData = riskFactorImpacts.map(item => item.impact);
+
+    const impactColors = impactData.map(impact => {
+      switch(impact) {
+          case 4: return '#dc2626'; 
+          case 3: return '#f59e0b'; 
+          case 2: return '#10b981'; 
+          case 1: return '#3b82f6'; 
+          default: return '#8b5cf6'; 
+        }
     });
-  }
 
-  // Chart 2: Risk Factor Impact Scores
-  const impactLabels = riskFactorImpacts.map(item => item.factor);
-  const impactData = riskFactorImpacts.map(item => item.impact);
-  
-  const impactColors = impactData.map(impact => {
-    switch(impact) {
-        case 4: return '#dc2626'; 
-        case 3: return '#f59e0b'; 
-        case 2: return '#10b981'; 
-        case 1: return '#3b82f6'; 
-        default: return '#8b5cf6'; 
-      }
-  });
-
-  let chart2 = null;
-  if (impactData.length > 0) {
-    chart2 = new Chart(ctx2, {
-      type: 'pie',
-      data: {
-        labels: impactLabels,
-        datasets: [{
-          data: impactData,
-          backgroundColor: impactColors,
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: false,
-        maintainAspectRatio: true,
-        animation: {
-          duration: 0 // Disable animations for cleaner export
+    let chart2 = null;
+    if (impactData.length > 0) {
+      chart2 = new Chart(ctx2, {
+        type: 'pie',
+        data: {
+          labels: impactLabels,
+          datasets: [{
+            data: impactData,
+            backgroundColor: impactColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
         },
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              font: {
-                size: 12
-              },
-              padding: 15,
-              generateLabels: function(chart) {
-                const data = chart.data;
-                return data.labels.map((label, index) => ({
-                  text: `${label} (${data.datasets[0].data[index]})`,
-                  fillStyle: data.datasets[0].backgroundColor[index],
-                  strokeStyle: data.datasets[0].borderColor,
-                  lineWidth: data.datasets[0].borderWidth
-                }));
-              }
-            }
+        options: {
+          responsive: false,
+          maintainAspectRatio: true,
+          animation: {
+            duration: 0 // Disable animations for cleaner export
           },
-          title: {
-            display: true,
-            text: 'Risk Factor Impact Scores (1-4)',
-            font: {
-              size: 16,
-              weight: 'bold'
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: {
+                  size: 12
+                },
+                padding: 15,
+                generateLabels: function(chart) {
+                  const data = chart.data;
+                  return data.labels.map((label, index) => ({
+                    text: `${label} (${data.datasets[0].data[index]})`,
+                    fillStyle: data.datasets[0].backgroundColor[index],
+                    strokeStyle: data.datasets[0].borderColor,
+                    lineWidth: data.datasets[0].borderWidth
+                  }));
+                }
+              }
             },
-            padding: 20
+            title: {
+              display: true,
+              text: 'Risk Factor Impact Scores (1-4)',
+              font: {
+                size: 16,
+                weight: 'bold'
+              },
+              padding: 20
+            }
           }
         }
-      }
-    });
-  }
+      });
+    }
 
-  // Wait longer for charts to fully render
-  await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait longer for charts to fully render
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // Alternative approach: Force chart updates before export
-  if (chart1) {
-    chart1.update('none'); // Update without animation
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  if (chart2) {
-    chart2.update('none'); // Update without animation
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
+    // Alternative approach: Force chart updates before export
+    if (chart1) {
+      chart1.update('none'); // Update without animation
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    if (chart2) {
+      chart2.update('none'); // Update without animation
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
-  // Convert charts to base64 images with higher quality
-  const chart1Image = chart1 ? canvas1.toDataURL('image/png', 1.0) : null;
-  const chart2Image = chart2 ? canvas2.toDataURL('image/png', 1.0) : null;
+    // Convert charts to base64 images with higher quality
+    const chart1Image = chart1 ? canvas1.toDataURL('image/png', 1.0) : null;
+    const chart2Image = chart2 ? canvas2.toDataURL('image/png', 1.0) : null;
 
-  // Clean up
-  if (chart1) chart1.destroy();
-  if (chart2) chart2.destroy();
+    // Clean up
+    if (chart1) chart1.destroy();
+    if (chart2) chart2.destroy();
 
-  return { 
-    chart1Image, 
-    chart2Image,
-    hasValidData: riskFactorImpacts.length > 0,
-    filteredRiskFactorsCount: riskFactorImpacts.length
+    return { 
+      chart1Image, 
+      chart2Image,
+      hasValidData: riskFactorImpacts.length > 0,
+      filteredRiskFactorsCount: riskFactorImpacts.length
+    };
   };
-};
 
   const generatePDF = async () => {
       const patient = selectedPatient;
@@ -568,7 +549,7 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
             `;
           }
 
-          // Enhanced PDF content with conditional charts
+          // Enhanced PDF content with comprehensive Purva Medical Trust details
           pdfContainer.innerHTML = `
             <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #2563eb; padding-bottom: 15px;">
               <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
@@ -676,27 +657,101 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
             </div>
                 
             <!-- Disclaimer -->
-              <div style="margin-bottom: 20px; background: #fffbeb; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; page-break-inside: avoid;">
-                  <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #92400e; display: flex; align-items: center;">
-                      <span style="margin-right: 8px;">⚠️</span>
-                      Important Disclaimer
-                  </h3>
-                  <div style="font-size: 12px; color: #78350f; line-height: 1.6;">
-                      <p style="margin: 0 0 10px 0;">
-                          <strong>Risk Assessment Period:</strong> This Brainline Riskometer assessment estimates your stroke risk over the next <strong>5 years</strong> based on current risk factors. This timeframe is chosen because most risk factors (hypertension, diabetes, cholesterol levels) are dynamic and can be improved through lifestyle changes and medical intervention.
-                      </p>
-                      <p style="margin: 0 0 10px 0;">
-                          <strong>Clinical Limitations:</strong> This assessment is a screening tool and should not replace professional medical consultation. Individual risk may vary based on factors not captured in this assessment.
-                      </p>
-                      <p style="margin: 0;">
-                          <strong>Action Required:</strong> Consult with your healthcare provider to discuss these results and develop an appropriate prevention strategy tailored to your specific health profile.
-                      </p>
-                  </div>
+            <div style="margin-bottom: 20px; background: #fffbeb; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; page-break-inside: avoid;">
+                <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #92400e; display: flex; align-items: center;">
+                    <span style="margin-right: 8px;">⚠️</span>
+                    Important Disclaimer
+                </h3>
+                <div style="font-size: 12px; color: #78350f; line-height: 1.6;">
+                    <p style="margin: 0 0 10px 0;">
+                        <strong>Risk Assessment Period:</strong> This Brainline Riskometer assessment estimates your stroke risk over the next <strong>5 years</strong> based on current risk factors. This timeframe is chosen because most risk factors (hypertension, diabetes, cholesterol levels) are dynamic and can be improved through lifestyle changes and medical intervention.
+                    </p>
+                    <p style="margin: 0 0 10px 0;">
+                        <strong>Clinical Limitations:</strong> This assessment is a screening tool and should not replace professional medical consultation. Individual risk may vary based on factors not captured in this assessment.
+                    </p>
+                    <p style="margin: 0;">
+                        <strong>Action Required:</strong> Consult with your healthcare provider to discuss these results and develop an appropriate prevention strategy tailored to your specific health profile.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Enhanced Footer with Purva Medical Trust Details -->
+            <div style="border-top: 2px solid #2563eb; padding-top: 20px; margin-top: 30px; background: #f8fafc; padding: 20px; border-radius: 8px;">
+              <div style="text-align: center; margin-bottom: 15px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #2563eb; font-weight: bold;">About Purva Medical Trust</h3>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666; line-height: 1.5;">
+                  Purva Medical Trust is committed to spreading stroke prevention awareness and improving healthcare accessibility. 
+                  Our mission is to empower individuals with knowledge and tools for better health outcomes.
+                </p>
               </div>
-                
-            <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; text-align: center; font-size: 12px; color: #666;">
-              <p style="margin: 0;">Report generated by <strong>Dr. Ashok Hande</strong></p>
-              <p style="margin: 8px 0 0 0;">For queries, visit: <a href="https://brainline.info/" style="color: #2563eb;">brainline.info</a></p>
+
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px;">
+                <!-- Contact & Website Section -->
+                <div style="text-align: center;">
+                  <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1f2937; font-weight: bold;">🌐 Online Resources</h4>
+                  <div style="font-size: 12px; color: #666; line-height: 1.8;">
+                    <p style="margin: 2px 0;"><strong>Official Website:</strong><br>
+                       <a href="https://brainline.info/" style="color: #2563eb; text-decoration: none; font-weight: 500;">brainline.info</a>
+                    </p>
+                    <p style="margin: 2px 0;"><strong>Email:</strong><br>
+                       <a href="mailto:contact@brainline.info" style="color: #2563eb; text-decoration: none;">contact@brainline.info</a>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Social Media & Content Section -->
+                <div style="text-align: center;">
+                  <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1f2937; font-weight: bold;">📱 Follow Us</h4>
+                  <div style="font-size: 12px; color: #666; line-height: 1.8;">
+                    <p style="margin: 2px 0;"><strong>YouTube Channel:</strong><br>
+                       <a href="https://youtube.com/@brainlineinfo" style="color: #2563eb; text-decoration: none;">@brainlineinfo</a>
+                    </p>
+                    <p style="margin: 2px 0;"><strong>Podcast:</strong><br>
+                       <span style="color: #2563eb;">"Brainline Health Talks"</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Educational Content Section -->
+              <div style="background: #ffffff; border: 1px solid #e5e7eb; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1f2937; font-weight: bold; text-align: center;">📚 Educational Resources Available</h4>
+                <div style="font-size: 11px; color: #666; text-align: center; line-height: 1.6;">
+                  <p style="margin: 5px 0;">✓ Stroke Prevention Guides &nbsp;&nbsp; ✓ Healthy Lifestyle Tips &nbsp;&nbsp; ✓ Risk Assessment Tools</p>
+                  <p style="margin: 5px 0;">✓ Expert Interviews &nbsp;&nbsp; ✓ Patient Success Stories &nbsp;&nbsp; ✓ Medical Q&A Sessions</p>
+                  <p style="margin: 5px 0; font-style: italic;">Visit our website and subscribe to our channel for regular health updates!</p>
+                </div>
+              </div>
+
+              <!-- Social Media Links Grid -->
+              <div style="text-align: center; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1f2937; font-weight: bold;">Connect With Us</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px;">
+                  <div style="background: #3b82f6; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">Facebook</div>
+                    <div style="font-size: 10px;">@PurvaMedicalTrust</div>
+                  </div>
+                  <div style="background: #1da1f2; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">Twitter</div>
+                    <div style="font-size: 10px;">@BrainlineInfo</div>
+                  </div>
+                  <div style="background: #0e76a8; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">LinkedIn</div>
+                    <div style="font-size: 10px;">Purva Medical Trust</div>
+                  </div>
+                  <div style="background: #25d366; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">WhatsApp</div>
+                    <div style="font-size: 10px;">Health Updates</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Generation Info -->
+              <div style="text-align: center; font-size: 11px; color: #666; border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                <p style="margin: 0 0 5px 0;">Report generated by <strong>Dr. Ashok Hande</strong> | Lead Physician, Purva Medical Trust</p>
+                <p style="margin: 0 0 5px 0;"><strong>For medical consultations:</strong> Schedule an appointment through our website</p>
+                <p style="margin: 0; font-style: italic;">This report is part of our commitment to preventive healthcare and community wellness.</p>
+              </div>
             </div>
           `;
 

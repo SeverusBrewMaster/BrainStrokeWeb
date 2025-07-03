@@ -38,7 +38,15 @@ const MiddlemanDashboard = () => {
         calculatePeopleCount(data); // Use the new function
       } catch (error) {
         console.error("Error fetching patients:", error);
-        alert("Error loading patient data. Please refresh the page.");
+        showErrorModal(
+          "Data Loading Error",
+          "Failed to load patient data. Please check your internet connection and try again.",
+          () => {
+            setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
+            // Retry the fetch
+            fetchPatients();
+          }
+        );
       }
     };
 
@@ -59,6 +67,23 @@ const MiddlemanDashboard = () => {
   const [sleepHours, setSleepHours] = useState('');
   const [tiaHistory, setTiaHistory] = useState('');
   const [alcoholFrequency, setAlcoholFrequency] = useState('');
+
+  const [logoutModal, setLogoutModal] = useState({
+    isVisible: false
+  });
+
+  const [errorModal, setErrorModal] = useState({
+    isVisible: false,
+    title: '',
+    message: '',
+    onRetry: null
+  });
+
+  const [successModal, setSuccessModal] = useState({
+    isVisible: false,
+    title: '',
+    message: ''
+  });
 
   // For storing patient's existing data
   const [patientVitals, setPatientVitals] = useState({
@@ -404,6 +429,15 @@ const MiddlemanDashboard = () => {
     }
   } catch (error) {
     console.error("Error loading existing assessment:", error);
+    showErrorModal(
+      "Assessment Loading Error",
+      "Failed to load existing assessment data. The form will be reset to blank.",
+      () => {
+        setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
+        // Retry loading
+        loadExistingAssessment(patient);
+      }
+    );
     resetForm(); // Reset on error
   }
 };
@@ -608,7 +642,15 @@ const handleSaveAfterAssessment = async () => {
   } catch (error) {
     console.error("Error saving data:", error);
     setSaveStatus('error');
-    alert("Error saving data. Please try again.");
+    showErrorModal(
+      "Save Error",
+      "Failed to save the medical assessment. Please check your internet connection and try again.",
+      () => {
+        setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
+        // Retry the save
+        handleSaveAfterAssessment();
+      }
+    );
     setTimeout(() => setSaveStatus(''), 3000);
   }
 };
@@ -691,7 +733,15 @@ const handleSaveAfterAssessment = async () => {
     
     } catch (error) {
       console.error("Error deleting assessment:", error);
-      alert("Error deleting assessment. Please try again.");
+      showErrorModal(
+        "Delete Error",
+        "Failed to delete the medical assessment. Please try again.",
+        () => {
+          setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
+          // Retry the delete
+          confirmDeleteAssessment();
+        }
+      );
     }
   };
 
@@ -746,11 +796,115 @@ const handleSaveAfterAssessment = async () => {
   );
 
   const handleLogout = () => {
-  if (window.confirm("Are you sure you want to logout?")) {
-    alert("Logged out successfully!");
+    setLogoutModal({ isVisible: true });
+  };
+
+  const confirmLogout = () => {
+    setLogoutModal({ isVisible: false });
     navigate('/');
-  }
-};
+  };
+
+  const showErrorModal = (title, message, onRetry = null) => {
+    setErrorModal({
+      isVisible: true,
+      title,
+      message,
+      onRetry
+    });
+  };
+  
+  const showSuccessModal = (title, message) => {
+    setSuccessModal({
+      isVisible: true,
+      title,
+      message
+    });
+  };
+
+  // Logout Confirmation Modal
+  const LogoutModal = () => (
+    logoutModal.isVisible && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+          <div className="flex items-center mb-4">
+            <AlertCircle className="w-6 h-6 text-orange-500 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
+          </div>
+          <p className="text-gray-600 mb-6">
+            Are you sure you want to logout? Any unsaved changes will be lost.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setLogoutModal({ isVisible: false })}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmLogout}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  );
+
+  // Error Modal
+  const ErrorModal = () => (
+    errorModal.isVisible && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-red-500 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">{errorModal.title}</h3>
+          </div>
+          <p className="text-gray-600 mb-6">{errorModal.message}</p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setErrorModal({ isVisible: false, title: '', message: '', onRetry: null })}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+            {errorModal.onRetry && (
+              <button
+                onClick={errorModal.onRetry}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  );
+
+  // Success Modal
+  const SuccessModal = () => (
+    successModal.isVisible && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+          <div className="flex items-center mb-4">
+            <CheckCircle className="w-6 h-6 text-green-500 mr-3" />
+            <h3 className="text-lg font-semibold text-gray-900">{successModal.title}</h3>
+          </div>
+          <p className="text-gray-600 mb-6">{successModal.message}</p>
+          <div className="flex justify-end">
+            <button
+              onClick={() => setSuccessModal({ isVisible: false, title: '', message: '' })}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  );
 
   return (
     <>
@@ -1443,6 +1597,9 @@ const handleSaveAfterAssessment = async () => {
             )}
           </div>
         </div>
+        <LogoutModal />
+        <ErrorModal />
+        <SuccessModal />
       </div>
     </>
   );
