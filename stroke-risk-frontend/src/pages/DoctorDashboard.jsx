@@ -208,23 +208,73 @@ const DoctorDashboard = () => {
     const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
     const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
 
+    // Smoking/Tobacco consumption
     if (assessment.smoke === 'yes') contributing.Lifestyle.push("Smoking/Tobacco");
-    if (systolic > 140 || diastolic > 90) contributing.Clinical.push("High Blood Pressure");
+    
+    // Hypertension - differentiate controlled vs uncontrolled
+    if (systolic >= 160 || diastolic >= 100) {
+        contributing.Clinical.push("Uncontrolled Hypertension");
+    } else if (systolic > 140 || diastolic > 90) {
+        contributing.Clinical.push("Controlled Hypertension");
+    }
+    
+    // Age factor
     if (age > 60) contributing.Background.push("Age > 60");
+    
+    // Alcohol abuse
     if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.Lifestyle.push("Alcohol Abuse");
+    
+    // Atrial fibrillation
     if (assessment.irregularHeartbeat === 'yes') contributing.Clinical.push("Atrial Fibrillation");
-    if (assessment.diabetes === 'yes' || rbs > 160 || hba1c > 6.5) contributing.Clinical.push("Diabetes");
-    if (cholesterol > 200 || ldl > 100 || hdl < 60) contributing.Clinical.push("Abnormal Lipid Profile");
+    
+    // Diabetes - differentiate controlled vs uncontrolled
+    if (assessment.diabetes === 'yes' || rbs > 160) {
+        if (hba1c >= 7) {
+            contributing.Clinical.push("Uncontrolled Diabetes");
+        } else if (hba1c > 0) {
+            contributing.Clinical.push("Controlled Diabetes");
+        } else {
+            contributing.Clinical.push("Uncontrolled Diabetes"); // Assume uncontrolled if no HbA1c
+        }
+    }
+    
+    // Lipid Profile - differentiate borderline vs high risk
+    const hasHighCholesterol = cholesterol > 240;
+    const hasHighLDL = ldl > 160;
+    const hasLowHDL = hdl < 40; // Updated threshold for high risk
+    const hasBorderlineCholesterol = cholesterol > 200 && cholesterol <= 240;
+    const hasBorderlineLDL = ldl > 100 && ldl <= 160;
+    const hasBorderlineHDL = hdl >= 40 && hdl < 60;
+    
+    if (hasHighCholesterol || hasHighLDL || hasLowHDL) {
+        contributing.Clinical.push("High Risk Lipid Profile");
+    } else if (hasBorderlineCholesterol || hasBorderlineLDL || hasBorderlineHDL) {
+        contributing.Clinical.push("Borderline Lipid Profile");
+    }
+    
+    // High stress levels (PSS 3-4)
     if (stress >= 3) contributing.Lifestyle.push("High Stress");
+    
+    // No exercise
     if (assessment.exercise === 'no') contributing.Lifestyle.push("Lack of Exercise");
+    
+    // BMI >30 (obesity)
     if (bmi > 30) contributing.Lifestyle.push("High BMI");
+    
+    // History of TIA
     if (assessment.tiaHistory === 'yes') contributing.Clinical.push("History of TIA");
+    
+    // Sleep deprivation
     if (sleep < 6) contributing.Lifestyle.push("Sleep Deprivation");
-    if (aqi > 200) contributing.Background.push("Poor Air Quality");
+    
+    // Air pollution - revised threshold for semi-rural settings
+    if (aqi > 150) contributing.Background.push("Poor Air Quality");
+    
+    // Family history
     if (assessment.familyHistory === 'yes') contributing.Background.push("Family History");
 
     return contributing;
-  };
+};
 
   const handlePatientSelect = (patient) => {
     setSelectedPatient(patient);
@@ -233,76 +283,93 @@ const DoctorDashboard = () => {
   };
 
   const generateChartImages = async (patient, assessment, riskFactors) => {
-    // Function to categorize risk factors - using EXACT same categories as extractRiskFactors
+    // Function to categorize risk factors - updated with new controlled/uncontrolled categories
     const categorizeRiskFactors = (riskFactors) => {
-      const categories = {
-        Clinical: [],
-        Lifestyle: [],
-        Background: []
-      };
+        const categories = {
+            Clinical: [],
+            Lifestyle: [],
+            Background: []
+        };
 
-      // Define the exact factors from extractRiskFactors function
-      const clinicalFactors = [
-        'High Blood Pressure', 
-        'Atrial Fibrillation', 
-        'Diabetes', 
-        'Abnormal Lipid Profile', 
-        'History of TIA'
-      ];
+        // Define the exact factors from extractRiskFactors function
+        const clinicalFactors = [
+            'Controlled Hypertension',
+            'Uncontrolled Hypertension',
+            'Atrial Fibrillation',
+            'Controlled Diabetes',
+            'Uncontrolled Diabetes',
+            'Borderline Lipid Profile',
+            'High Risk Lipid Profile',
+            'History of TIA'
+        ];
 
-      const lifestyleFactors = [
-        'Smoking/Tobacco', 
-        'Alcohol Abuse', 
-        'High Stress', 
-        'Lack of Exercise', 
-        'High BMI', 
-        'Sleep Deprivation'
-      ];
+        const lifestyleFactors = [
+            'Smoking/Tobacco',
+            'Alcohol Abuse',
+            'High Stress',
+            'Lack of Exercise',
+            'High BMI',
+            'Sleep Deprivation'
+        ];
 
-      const backgroundFactors = [
-        'Age > 60', 
-        'Poor Air Quality', 
-        'Family History'
-      ];
+        const backgroundFactors = [
+            'Age > 60',
+            'Poor Air Quality',
+            'Family History'
+        ];
 
-      riskFactors.forEach(factor => {
-        if (clinicalFactors.includes(factor)) {
-          categories.Clinical.push(factor);
-        } else if (lifestyleFactors.includes(factor)) {
-          categories.Lifestyle.push(factor);
-        } else if (backgroundFactors.includes(factor)) {
-          categories.Background.push(factor);
-        }
-      });
+        riskFactors.forEach(factor => {
+            if (clinicalFactors.includes(factor)) {
+                categories.Clinical.push(factor);
+            } else if (lifestyleFactors.includes(factor)) {
+                categories.Lifestyle.push(factor);
+            } else if (backgroundFactors.includes(factor)) {
+                categories.Background.push(factor);
+            }
+        });
 
-      return categories;
+        return categories;
     };
 
     // Function to assign impact scores to risk factors - using EXACT factor names
     const getRiskFactorImpacts = (riskFactors) => {
-      const impactMap = {
-        'High Blood Pressure': 3,
-        'Diabetes': 2,
-        'Smoking/Tobacco': 1,
-        'Atrial Fibrillation': 2,
-        'History of TIA': 2,
-        'Age > 60': 1,
-        'Abnormal Lipid Profile': 2,
-        'Lack of Exercise': 1,
-        'High BMI': 1,
-        'Family History': 2,
-        'Alcohol Abuse': 1,
-        'High Stress': 1,
-        'Sleep Deprivation': 1,
-        'Poor Air Quality': 1
-      };
-
-      return riskFactors.map(factor => {
-        return {
-          factor: factor,
-          impact: impactMap[factor] || 1 // Default to 1 if not found
+        const impactMap = {
+            // Hypertension scoring
+            'Controlled Hypertension': 2,
+            'Uncontrolled Hypertension': 3,
+            
+            // Diabetes scoring
+            'Controlled Diabetes': 1,
+            'Uncontrolled Diabetes': 2,
+            
+            // Lipid profile scoring
+            'Borderline Lipid Profile': 1,
+            'High Risk Lipid Profile': 2,
+            
+            // Other clinical factors
+            'Atrial Fibrillation': 2,
+            'History of TIA': 2,
+            
+            // Lifestyle factors
+            'Smoking/Tobacco': 1,
+            'Alcohol Abuse': 1,
+            'High Stress': 1,
+            'Lack of Exercise': 1,
+            'High BMI': 1,
+            'Sleep Deprivation': 1,
+            
+            // Background factors
+            'Age > 60': 1,
+            'Poor Air Quality': 1,
+            'Family History': 2
         };
-      }).filter(item => item.impact > 0); // Filter out risk factors with 0 impact score
+
+        return riskFactors.map(factor => {
+            return {
+                factor: factor,
+                impact: impactMap[factor] || 1 // Default to 1 if not found
+            };
+        }).filter(item => item.impact > 0); // Filter out risk factors with 0 impact score
     };
 
     const riskFactorImpacts = getRiskFactorImpacts(riskFactors);
@@ -1117,8 +1184,12 @@ const DoctorDashboard = () => {
       <div className="bg-white shadow-lg border-b border-gray-200">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <FaHeartbeat className="text-white text-xl" />
+            <div className="flex-shrink-0">
+               <img 
+                 src={logo} 
+                 alt="Brainline Logo" 
+                 className="w-16 h-16 lg:w-16 lg:h-16 object-contain"
+               />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">Doctor Dashboard</h2>
           </div>
@@ -1138,8 +1209,8 @@ const DoctorDashboard = () => {
 
       <div className="flex h-[calc(100vh-80px)]">
         {/* Sidebar */}
-        <div className="w-1/3 bg-white shadow-xl border-r border-gray-200 overflow-y-auto">
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-orange-50">
+        <div className="w-1/3 bg-white shadow-xl border-r border-gray-200 flex flex-col">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-orange-50 flex-shrink-0">
             <h1 className="text-xl font-bold text-gray-800 flex items-center">
               <FaExclamationTriangle className="text-red-500 mr-3" />
               High/Moderate Risk Patients ({filteredPatients.length})
@@ -1168,7 +1239,7 @@ const DoctorDashboard = () => {
             </div>
           </div>
           
-          <div className="p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {filteredPatients.length === 0 ? (
               <div className="text-center py-8">
                 <FaClipboardList className="text-gray-400 text-4xl mx-auto mb-4" />

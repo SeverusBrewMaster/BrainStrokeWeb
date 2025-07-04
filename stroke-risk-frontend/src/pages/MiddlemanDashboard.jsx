@@ -17,6 +17,7 @@ import {
   deleteDoc
 } from "firebase/firestore";
 import { FaHeartbeat, FaUserCircle } from 'react-icons/fa';
+import logo from '../components/logo1.png';
 
 const MiddlemanDashboard = () => {
   // State for patient data
@@ -296,52 +297,103 @@ const MiddlemanDashboard = () => {
     const stressNum = parseInt(stressLevel) || 0;
     const sleepNum = parseInt(sleepHours) || 8;
     const aqiNum = parseInt(patientVitals.aqi) || 0;
-
+    
     // Parse blood pressure
     const bpParts = patientVitals.bloodPressure.split('/');
     const systolic = parseInt(bpParts[0]) || 0;
     const diastolic = parseInt(bpParts[1]) || 0;
-
+    
     // Parse cholesterol values
     const ldlNum = parseFloat(patientVitals.ldl) || 0;
     const hdlNum = parseFloat(patientVitals.hdl) || 0;
     const cholesterolNum = parseFloat(patientVitals.cholesterol) || 0;
-
     const hba1cNum = parseFloat(patientVitals.hba1c) || 0;
+    const rnddiabetesNum = parseFloat(patientVitals.rnddiabetes) || 0;
 
-    // Risk scoring based on new parameters
-    if (smoke === 'yes') score += 1; // Smoking/Tobacco consumption
-    if (systolic > 140 || diastolic > 90) score += 3; // Blood Pressure >140/90
-    if (ageNum > 60) score += 1; // Age > 60
-    if (alcoholFrequency === 'daily' || alcoholFrequency === 'multiple-daily') score += 1; // Alcohol abuse
-    if (irregularHeartbeat === 'yes') score += 2; // Atrial fibrillation
-    if (diabetes === 'yes' || rnddiabetesNum > 160 || hba1cNum > 6.5) score += 2; // Diabetes
-    if (cholesterolNum > 200 || ldlNum > 100 || hdlNum < 60) score += 2; // Abnormal Lipid profile
-    if (stressNum >= 3) score += 1; // High stress levels (PSS 3-4)
-    if (exercise === 'no') score += 1; // No exercise
-    if (bmiNum > 30) score += 1; // BMI >30
-    if (tiaHistory === 'yes') score += 2; // History of TIA
-    if (sleepNum < 6) score += 1; // Sleep deprivation
-    if (aqiNum > 150) score += 1; // Air pollution
-    if (familyHistory === 'yes') score += 2; // Family history
-
+    // Risk scoring with controlled/uncontrolled differentiation
+    
+    // Smoking/Tobacco consumption
+    if (smoke === 'yes') score += 1;
+    
+    // Hypertension - differentiate controlled vs uncontrolled
+    if (systolic > 160 || diastolic > 100) {
+        score += 3; // Uncontrolled hypertension
+    } else if (systolic > 140 || diastolic > 90) {
+        score += 2; // Controlled hypertension
+    }
+    
+    // Age factor
+    if (ageNum > 60) score += 1;
+    
+    // Alcohol abuse
+    if (alcoholFrequency === 'daily' || alcoholFrequency === 'multiple-daily') score += 1;
+    // Atrial fibrillation
+    if (irregularHeartbeat === 'yes') score += 2;
+    // Diabetes - differentiate controlled vs uncontrolled
+    if (diabetes === 'yes' || rnddiabetesNum > 160) {
+        if (hba1cNum >= 7) {
+            score += 2; // Uncontrolled diabetes
+        } else if (6.5 < hba1cNum < 7) {
+            score += 1; // Controlled diabetes
+        } else {
+            score += 2; // Diabetes without HbA1c data (assume uncontrolled)
+        }
+    }
+    // Lipid Profile - differentiate borderline vs high risk
+    const hasHighCholesterol = cholesterolNum > 240;
+    const hasHighLDL = ldlNum > 160;
+    const hasLowHDL = hdlNum < 40; // Updated threshold for high risk
+    const hasBorderlineCholesterol = cholesterolNum > 200 && cholesterolNum <= 240;
+    const hasBorderlineLDL = ldlNum > 100 && ldlNum <= 160;
+    const hasBorderlineHDL = hdlNum >= 40 && hdlNum < 60;
+    if (hasHighCholesterol || hasHighLDL || hasLowHDL) {
+        score += 2; // High risk lipid profile
+    } else if (hasBorderlineCholesterol || hasBorderlineLDL || hasBorderlineHDL) {
+        score += 1; // Borderline lipid profile
+    }
+    // High stress levels (PSS 3-4)
+    if (stressNum >= 3) score += 1;
+    // No exercise
+    if (exercise === 'no') score += 1;
+    // BMI >30 (obesity)
+    if (bmiNum > 30) score += 1;
+    // History of TIA
+    if (tiaHistory === 'yes') score += 2;
+    // Sleep deprivation
+    if (sleepNum < 6) score += 1;
+    // Air pollution - revised threshold for semi-rural settings
+    if (aqiNum > 150) score += 1;
+    // Family history
+    if (familyHistory === 'yes') score += 2;
+    // Standardized scoring interpretation (out of 21+ possible points)
     let category = '';
     let recommendationText = '';
-
-    if (score < 5) {
-      category = 'Low';
-      recommendationText = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups.';
-    } else if (score >= 5 && score <= 8) {
-      category = 'Moderate';
-      recommendationText = 'Moderate risk detected. Consider dietary modifications, regular exercise, and follow-up with your physician.';
+    let rescreenInterval = '';
+    let urgentReferral = false;
+    if (score <= 5) {
+        category = 'Low';
+        recommendationText = 'You are a healthy individual. Maintain your current lifestyle with regular check-ups and preventive care.';
+        rescreenInterval = 'Re-screen after 12 months';
+    } else if (score >= 6 && score <= 12) {
+        category = 'Moderate';
+        recommendationText = 'Moderate risk detected. Consider dietary modifications, regular exercise, stress management, and follow-up with your physician for lifestyle counselling.';
+        rescreenInterval = 'Lifestyle counselling recommended, re-check in 6 months';
     } else {
-      category = 'High';
-      recommendationText = 'High risk detected. Immediate consultation with a healthcare provider is recommended.';
-      setShowDoctorReferral(true);
+        category = 'High';
+        recommendationText = 'High risk detected. Immediate consultation with a healthcare provider is strongly recommended for comprehensive evaluation and management.';
+        rescreenInterval = 'Urgent referral to partner hospital';
+        urgentReferral = true;
+        setShowDoctorReferral(true);
     }
-
-    return { score, category, tips: recommendationText };
-  };
+    return { 
+        score, 
+        category, 
+        tips: recommendationText,
+        rescreenInterval,
+        urgentReferral,
+        maxPossibleScore: 21 // For reference
+    };
+};
 
   const validateForm = () => {
     // Basic validation - can be enhanced
@@ -918,8 +970,12 @@ const handleSaveAfterAssessment = async () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <FaHeartbeat className="text-white text-xl" />
+                <div className="flex-shrink-0">
+                   <img 
+                     src={logo} 
+                     alt="Brainline Logo" 
+                     className="w-16 h-16 lg:w-16 lg:h-16 object-contain"
+                   />
                 </div>
               </div>
               <div>

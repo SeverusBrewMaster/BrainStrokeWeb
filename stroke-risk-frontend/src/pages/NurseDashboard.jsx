@@ -5,6 +5,7 @@ import {
   where, getDoc, getDocs, deleteDoc, doc
 } from "firebase/firestore";
 import { useNavigate } from 'react-router-dom';
+import logo from '../components/logo1.png';
 import { updateDoc } from "firebase/firestore";
 import { FaUserCircle, FaTrashAlt, FaChevronDown, FaChevronUp, FaPlus, FaEdit, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaWeight, FaRuler, FaHeartbeat, FaFlask } from "react-icons/fa";
 
@@ -341,12 +342,16 @@ const NurseDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Navigation Bar */}
       <nav className="bg-white shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl m-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <FaHeartbeat className="text-white text-xl" />
+                <div className="flex-shrink-0">
+                   <img 
+                     src={logo} 
+                     alt="Brainline Logo" 
+                     className="w-16 h-16 lg:w-16 lg:h-16 object-contain"
+                   />
                 </div>
               </div>
               <div>
