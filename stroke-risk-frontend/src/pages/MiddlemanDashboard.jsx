@@ -1151,6 +1151,7 @@ const handleSaveAfterAssessment = async () => {
                         label="Do you engage in regular physical activity or exercise?"
                         value={exercise}
                         onChange={setExercise}
+                        required
                         options={[
                           { value: 'yes', label: 'Yes' },
                           { value: 'no', label: 'No' }
@@ -1161,6 +1162,7 @@ const handleSaveAfterAssessment = async () => {
                         label="What is your typical diet?"
                         value={diet}
                         onChange={setDiet}
+                        required
                         options={[
                           { value: 'veg', label: 'Vegetarian' },
                           { value: 'non-veg', label: 'Non-Vegetarian' },
@@ -1188,6 +1190,7 @@ const handleSaveAfterAssessment = async () => {
                           label="How often do you exercise?"
                           value={exerciseFrequency}
                           onChange={setExerciseFrequency}
+                          required
                           options={[
                             { value: 'daily', label: 'Daily' },
                             { value: '3-5', label: '3-5 times/week' },
@@ -1200,6 +1203,7 @@ const handleSaveAfterAssessment = async () => {
                         label="How often do you order outside food?"
                         value={outsideFood}
                         onChange={setOutsideFood}
+                        required
                         options={[
                           { value: 'never', label: 'Never' },
                           { value: 'rarely', label: 'Rarely' },
@@ -1224,6 +1228,7 @@ const handleSaveAfterAssessment = async () => {
                         label="Do you smoke?"
                         value={smoke}
                         onChange={setSmoke}
+                        required
                         options={[
                           { value: 'yes', label: 'Yes' },
                           { value: 'no', label: 'No' }
@@ -1236,6 +1241,7 @@ const handleSaveAfterAssessment = async () => {
                         label="Alcohol consumption frequency"
                         value={alcoholFrequency}
                         onChange={setAlcoholFrequency}
+                        required
                         options={[
                           { value: 'never', label: 'Never' },
                           { value: 'occasional', label: 'Occasional' },
@@ -1258,6 +1264,7 @@ const handleSaveAfterAssessment = async () => {
                         label="Do you have Stress?"
                         value={stressLevel}
                         onChange={setStressLevel}
+                        required
                         options={[
                           { value: 'yes', label: 'Yes' },
                           { value: 'no', label: 'No' }
@@ -1270,6 +1277,7 @@ const handleSaveAfterAssessment = async () => {
                           type="number"
                           value={sleepHours}
                           onChange={(e) => setSleepHours(e.target.value)}
+                          required
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="Enter hours (e.g., 7)"
                           min="0"
@@ -1288,19 +1296,10 @@ const handleSaveAfterAssessment = async () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <RadioGroup
-                        label="High Blood Pressure"
-                        value={hypertension}
-                        onChange={setHypertension}
-                        options={[
-                          { value: 'yes', label: 'Yes' },
-                          { value: 'no', label: 'No' }
-                        ]}
-                      />
-
-                      <RadioGroup
                         label="Irregular Heartbeats"
                         value={irregularHeartbeat}
                         onChange={setIrregularHeartbeat}
+                        required
                         options={[
                           { value: 'yes', label: 'Yes' },
                           { value: 'no', label: 'No' }
@@ -1311,6 +1310,7 @@ const handleSaveAfterAssessment = async () => {
                         label="Snoring"
                         value={snoring}
                         onChange={setSnoring}
+                        required
                         options={[
                           { value: 'yes', label: 'Yes' },
                           { value: 'no', label: 'No' }
@@ -1326,6 +1326,7 @@ const handleSaveAfterAssessment = async () => {
                           label="Have you experienced any episode of TIA (Transient Ischemic Attack) in the last 3 months?"
                           value={tiaHistory}
                           onChange={setTiaHistory}
+                          required
                           options={[
                             { value: 'yes', label: 'Yes' },
                             { value: 'no', label: 'No' }

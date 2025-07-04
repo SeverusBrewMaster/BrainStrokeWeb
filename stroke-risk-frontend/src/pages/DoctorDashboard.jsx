@@ -187,12 +187,15 @@ const DoctorDashboard = () => {
     return score >= 5;
   };
 
-  const extractRiskFactors = (patient, assessment) => {
-    const contributing = {
-      Clinical: [],
-      Lifestyle: [],
-      Background: []
-    };
+  const handlePatientSelect = (patient) => {
+    setSelectedPatient(patient);
+    setSelectedAssessment(patient.assessment);
+    setDoctorNote('');
+  };
+
+  // Fixed extractRiskFactors function - returns a flat array instead of categorized object
+const extractRiskFactors = (patient, assessment) => {
+    const riskFactors = []; // Change to flat array
 
     const age = Number(patient.age);
     const bmi = Number(patient.bmi);
@@ -209,80 +212,75 @@ const DoctorDashboard = () => {
     const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
 
     // Smoking/Tobacco consumption
-    if (assessment.smoke === 'yes') contributing.Lifestyle.push("Smoking/Tobacco");
+    if (assessment.smoke === 'yes') riskFactors.push("Smoking/Tobacco");
     
     // Hypertension - differentiate controlled vs uncontrolled
     if (systolic >= 160 || diastolic >= 100) {
-        contributing.Clinical.push("Uncontrolled Hypertension");
+        riskFactors.push("Uncontrolled Hypertension");
     } else if (systolic > 140 || diastolic > 90) {
-        contributing.Clinical.push("Controlled Hypertension");
+        riskFactors.push("Controlled Hypertension");
     }
     
     // Age factor
-    if (age > 60) contributing.Background.push("Age > 60");
+    if (age > 60) riskFactors.push("Age > 60");
     
     // Alcohol abuse
-    if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.Lifestyle.push("Alcohol Abuse");
+    if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) riskFactors.push("Alcohol Abuse");
     
     // Atrial fibrillation
-    if (assessment.irregularHeartbeat === 'yes') contributing.Clinical.push("Atrial Fibrillation");
+    if (assessment.irregularHeartbeat === 'yes') riskFactors.push("Atrial Fibrillation");
     
     // Diabetes - differentiate controlled vs uncontrolled
     if (assessment.diabetes === 'yes' || rbs > 160) {
         if (hba1c >= 7) {
-            contributing.Clinical.push("Uncontrolled Diabetes");
+            riskFactors.push("Uncontrolled Diabetes");
         } else if (hba1c > 0) {
-            contributing.Clinical.push("Controlled Diabetes");
+            riskFactors.push("Controlled Diabetes");
         } else {
-            contributing.Clinical.push("Uncontrolled Diabetes"); // Assume uncontrolled if no HbA1c
+            riskFactors.push("Uncontrolled Diabetes"); // Assume uncontrolled if no HbA1c
         }
     }
     
     // Lipid Profile - differentiate borderline vs high risk
     const hasHighCholesterol = cholesterol > 240;
     const hasHighLDL = ldl > 160;
-    const hasLowHDL = hdl < 40; // Updated threshold for high risk
+    const hasLowHDL = hdl < 40;
     const hasBorderlineCholesterol = cholesterol > 200 && cholesterol <= 240;
     const hasBorderlineLDL = ldl > 100 && ldl <= 160;
     const hasBorderlineHDL = hdl >= 40 && hdl < 60;
     
     if (hasHighCholesterol || hasHighLDL || hasLowHDL) {
-        contributing.Clinical.push("High Risk Lipid Profile");
+        riskFactors.push("High Risk Lipid Profile");
     } else if (hasBorderlineCholesterol || hasBorderlineLDL || hasBorderlineHDL) {
-        contributing.Clinical.push("Borderline Lipid Profile");
+        riskFactors.push("Borderline Lipid Profile");
     }
     
     // High stress levels (PSS 3-4)
-    if (stress >= 3) contributing.Lifestyle.push("High Stress");
+    if (stress >= 3) riskFactors.push("High Stress");
     
     // No exercise
-    if (assessment.exercise === 'no') contributing.Lifestyle.push("Lack of Exercise");
+    if (assessment.exercise === 'no') riskFactors.push("Lack of Exercise");
     
     // BMI >30 (obesity)
-    if (bmi > 30) contributing.Lifestyle.push("High BMI");
+    if (bmi > 30) riskFactors.push("High BMI");
     
     // History of TIA
-    if (assessment.tiaHistory === 'yes') contributing.Clinical.push("History of TIA");
+    if (assessment.tiaHistory === 'yes') riskFactors.push("History of TIA");
     
     // Sleep deprivation
-    if (sleep < 6) contributing.Lifestyle.push("Sleep Deprivation");
+    if (sleep < 6) riskFactors.push("Sleep Deprivation");
     
     // Air pollution - revised threshold for semi-rural settings
-    if (aqi > 150) contributing.Background.push("Poor Air Quality");
+    if (aqi > 150) riskFactors.push("Poor Air Quality");
     
     // Family history
-    if (assessment.familyHistory === 'yes') contributing.Background.push("Family History");
+    if (assessment.familyHistory === 'yes') riskFactors.push("Family History");
 
-    return contributing;
+    return riskFactors; // Return flat array
 };
 
-  const handlePatientSelect = (patient) => {
-    setSelectedPatient(patient);
-    setSelectedAssessment(patient.assessment);
-    setDoctorNote('');
-  };
-
-  const generateChartImages = async (patient, assessment, riskFactors) => {
+// Fixed generateChartImages function
+const generateChartImages = async (patient, assessment, riskFactors) => {
     // Function to categorize risk factors - updated with new controlled/uncontrolled categories
     const categorizeRiskFactors = (riskFactors) => {
         const categories = {
@@ -560,6 +558,97 @@ const DoctorDashboard = () => {
       filteredRiskFactorsCount: riskFactorImpacts.length
     };
   };
+
+  // Helper function to get categorized risk factors if needed elsewhere
+const getCategorizedRiskFactors = (patient, assessment) => {
+    const contributing = {
+      Clinical: [],
+      Lifestyle: [],
+      Background: []
+    };
+
+    const age = Number(patient.age);
+    const bmi = Number(patient.bmi);
+    const hba1c = Number(assessment.hba1c);
+    const rbs = Number(assessment.rbs);
+    const cholesterol = Number(assessment.cholesterol);
+    const ldl = Number(patient.ldl);
+    const hdl = Number(patient.hdl);
+    const aqi = Number(patient.aqi);
+    const sleep = Number(assessment.sleepHours);
+    const stress = Number(assessment.stressLevel);
+    const bp = patient.bloodPressure?.split('/');
+    const systolic = bp && bp.length === 2 ? parseInt(bp[0]) : 0;
+    const diastolic = bp && bp.length === 2 ? parseInt(bp[1]) : 0;
+
+    // Smoking/Tobacco consumption
+    if (assessment.smoke === 'yes') contributing.Lifestyle.push("Smoking/Tobacco");
+    
+    // Hypertension - differentiate controlled vs uncontrolled
+    if (systolic >= 160 || diastolic >= 100) {
+        contributing.Clinical.push("Uncontrolled Hypertension");
+    } else if (systolic > 140 || diastolic > 90) {
+        contributing.Clinical.push("Controlled Hypertension");
+    }
+    
+    // Age factor
+    if (age > 60) contributing.Background.push("Age > 60");
+    
+    // Alcohol abuse
+    if (['daily', 'multiple-daily'].includes(assessment.alcoholFrequency)) contributing.Lifestyle.push("Alcohol Abuse");
+    
+    // Atrial fibrillation
+    if (assessment.irregularHeartbeat === 'yes') contributing.Clinical.push("Atrial Fibrillation");
+    
+    // Diabetes - differentiate controlled vs uncontrolled
+    if (assessment.diabetes === 'yes' || rbs > 160) {
+        if (hba1c >= 7) {
+            contributing.Clinical.push("Uncontrolled Diabetes");
+        } else if (hba1c > 0) {
+            contributing.Clinical.push("Controlled Diabetes");
+        } else {
+            contributing.Clinical.push("Uncontrolled Diabetes"); // Assume uncontrolled if no HbA1c
+        }
+    }
+    
+    // Lipid Profile - differentiate borderline vs high risk
+    const hasHighCholesterol = cholesterol > 240;
+    const hasHighLDL = ldl > 160;
+    const hasLowHDL = hdl < 40; // Updated threshold for high risk
+    const hasBorderlineCholesterol = cholesterol > 200 && cholesterol <= 240;
+    const hasBorderlineLDL = ldl > 100 && ldl <= 160;
+    const hasBorderlineHDL = hdl >= 40 && hdl < 60;
+    
+    if (hasHighCholesterol || hasHighLDL || hasLowHDL) {
+        contributing.Clinical.push("High Risk Lipid Profile");
+    } else if (hasBorderlineCholesterol || hasBorderlineLDL || hasBorderlineHDL) {
+        contributing.Clinical.push("Borderline Lipid Profile");
+    }
+    
+    // High stress levels (PSS 3-4)
+    if (stress >= 3) contributing.Lifestyle.push("High Stress");
+    
+    // No exercise
+    if (assessment.exercise === 'no') contributing.Lifestyle.push("Lack of Exercise");
+    
+    // BMI >30 (obesity)
+    if (bmi > 30) contributing.Lifestyle.push("High BMI");
+    
+    // History of TIA
+    if (assessment.tiaHistory === 'yes') contributing.Clinical.push("History of TIA");
+    
+    // Sleep deprivation
+    if (sleep < 6) contributing.Lifestyle.push("Sleep Deprivation");
+    
+    // Air pollution - revised threshold for semi-rural settings
+    if (aqi > 150) contributing.Background.push("Poor Air Quality");
+    
+    // Family history
+    if (assessment.familyHistory === 'yes') contributing.Background.push("Family History");
+
+    return contributing;
+};
+
 
   const generatePDF = async () => {
       const patient = selectedPatient;
@@ -870,8 +959,23 @@ const DoctorDashboard = () => {
       const logoUrl = logo;
       const timestamp = new Date().toLocaleString();
 
-      // Generate chart images (same as generatePDF function)
-      const { chart1Image, chart2Image, hasValidData, filteredRiskFactorsCount } = await generateChartImages(patient, assessment, riskFactors);
+      // Generate chart images with proper error handling
+      let chartSectionHTML = '';
+      let hasValidData = false;
+      let chart1Image = null;
+      let chart2Image = null;
+      let filteredRiskFactorsCount = 0;
+
+      try {
+        const chartData = await generateChartImages(patient, assessment, riskFactors);
+        hasValidData = chartData.hasValidData;
+        chart1Image = chartData.chart1Image;
+        chart2Image = chartData.chart2Image;
+        filteredRiskFactorsCount = chartData.filteredRiskFactorsCount;
+      } catch (chartError) {
+        console.warn("Chart generation failed, proceeding without charts:", chartError);
+        hasValidData = false;
+      }
 
       // Sanitize patient name for filename
       const sanitizedPatientName = patient.name.replace(/[^a-zA-Z0-9]/g, '_');
@@ -887,7 +991,6 @@ const DoctorDashboard = () => {
       pdfContainer.style.backgroundColor = 'white';
 
       // Determine chart section content based on whether we have valid data
-      let chartSectionHTML = '';
       if (hasValidData && chart1Image && chart2Image) {
         chartSectionHTML = `
           <div style="margin-bottom: 20px; page-break-inside: avoid;">
@@ -920,7 +1023,7 @@ const DoctorDashboard = () => {
         `;
       }
 
-      // Enhanced PDF content with conditional charts (matching generatePDF function)
+      // Enhanced PDF content with conditional charts
       pdfContainer.innerHTML = `
         <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #2563eb; padding-bottom: 15px;">
           <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
@@ -969,38 +1072,21 @@ const DoctorDashboard = () => {
         <div style="margin-bottom: 15px;">
           <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">BP</div>
-              <div>${patient.bloodPressure}</div>
-            </div>
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">BMI</div>
-              <div>${patient.bmi}</div>
-            </div>
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">RBS</div>
-              <div>${patient.rbs || 'N/A'}</div>
-            </div>
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">HbA1c</div>
-              <div>${patient.hba1c || 'N/A'}</div>
-            </div>
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">Cholesterol</div>
-              <div>${patient.cholesterol || 'N/A'}</div>
-            </div>
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">HDL/LDL</div>
-              <div>${patient.hdl}/${patient.ldl}</div>
-            </div>
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">Hemoglobin</div>
-              <div>${patient.hemoglobin || 'N/A'}</div>
-            </div>
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">Platelets</div>
-              <div>${patient.platelets || 'N/A'}</div>
-            </div>
+            ${[
+              { label: 'BP', value: patient.bloodPressure },
+              { label: 'BMI', value: patient.bmi },
+              { label: 'RBS', value: patient.rbs || 'N/A' },
+              { label: 'HbA1c', value: patient.hba1c || 'N/A' },
+              { label: 'Cholesterol', value: patient.cholesterol || 'N/A' },
+              { label: 'HDL/LDL', value: `${patient.hdl}/${patient.ldl}` },
+              { label: 'Hemoglobin', value: patient.hemoglobin || 'N/A' },
+              { label: 'Platelets', value: patient.platelets || 'N/A' }
+            ].map(test => `
+              <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                <div style="font-weight: bold; margin-bottom: 4px;">${test.label}</div>
+                <div>${test.value}</div>
+              </div>
+            `).join('')}
           </div>
         </div>
 
@@ -1096,21 +1182,19 @@ const DoctorDashboard = () => {
 
       // Open WhatsApp with link
       const phone = patient.phone.replace(/\D/g, '');
-      const message = encodeURIComponent(`
-        Hello ${patient.name},
+      const message = encodeURIComponent(`Hello ${patient.name},
 
-        Your brain stroke risk report has been generated. 🧠
+Your brain stroke risk report has been generated. 🧠
 
-        📊 Risk Level: ${assessment?.riskAssessment?.riskCategory || 'N/A'}
-        📋 Risk Score: ${assessment?.riskAssessment?.riskScore || 'N/A'}
+📊 Risk Level: ${assessment?.riskAssessment?.riskCategory || 'N/A'}
+📋 Risk Score: ${assessment?.riskAssessment?.riskScore || 'N/A'}
 
-        📥 Download your report:
-        ${downloadURL}
+📥 Download your report:
+${downloadURL}
 
-        Stay healthy,
-        Dr. Ashok Hande
-        brainline.info
-      `);
+Stay healthy,
+Dr. Ashok Hande
+brainline.info`);
 
       window.open(`https://wa.me/91${phone}?text=${message}`, '_blank');
 
@@ -1470,7 +1554,7 @@ const DoctorDashboard = () => {
       Clinical Risk Factors
     </h3>
     <div className="space-y-2">
-      {extractRiskFactors(selectedPatient, selectedAssessment).Clinical?.map((factor, index) => (
+      {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Clinical?.map((factor, index) => (
         <div key={index} className="flex items-center space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
           <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 5l6 10H4l6-10z" />
@@ -1494,7 +1578,7 @@ const DoctorDashboard = () => {
     Lifestyle Risk Factors
   </h3>
   <div className="space-y-2">
-    {extractRiskFactors(selectedPatient, selectedAssessment).Lifestyle?.map((factor, index) => (
+    {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Lifestyle?.map((factor, index) => (
       <div
         key={index}
         className="flex items-center space-x-3 p-3 rounded-lg border"
@@ -1525,7 +1609,7 @@ const DoctorDashboard = () => {
       Background / Environmental Risk Factors
     </h3>
     <div className="space-y-2">
-      {extractRiskFactors(selectedPatient, selectedAssessment).Background?.map((factor, index) => (
+      {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Background?.map((factor, index) => (
         <div key={index} className="flex items-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 5l6 10H4l6-10z" />

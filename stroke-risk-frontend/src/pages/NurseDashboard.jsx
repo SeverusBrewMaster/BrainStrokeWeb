@@ -710,6 +710,7 @@ const NurseDashboard = () => {
         placeholder="Enter weight in kg"
         value={patientData.weight}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -721,6 +722,7 @@ const NurseDashboard = () => {
         placeholder="Enter height in cm"
         value={patientData.height}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -746,6 +748,7 @@ const NurseDashboard = () => {
         placeholder="Enter waist in cm"
         value={patientData.waist}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -760,6 +763,7 @@ const NurseDashboard = () => {
         placeholder="Enter HDL value"
         value={patientData.hdl}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -771,6 +775,7 @@ const NurseDashboard = () => {
         placeholder="Enter LDL value"
         value={patientData.ldl}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -785,6 +790,7 @@ const NurseDashboard = () => {
         placeholder="Enter cholesterol value"
         value={patientData.cholesterol}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -796,6 +802,7 @@ const NurseDashboard = () => {
         placeholder="Enter TG value"
         value={patientData.tg}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -807,6 +814,7 @@ const NurseDashboard = () => {
         placeholder="Enter homocysteine value"
         value={patientData.homocysteine}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -818,6 +826,7 @@ const NurseDashboard = () => {
         placeholder="Enter Lipoprotein A value"
         value={patientData.lipoprotein}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -852,6 +861,7 @@ const NurseDashboard = () => {
         placeholder="Enter hemoglobin level"
         value={patientData.hemoglobin}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -866,6 +876,7 @@ const NurseDashboard = () => {
         placeholder="Enter WBC count"
         value={patientData.wbc}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -877,6 +888,7 @@ const NurseDashboard = () => {
         placeholder="Enter platelet count"
         value={patientData.platelets}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -891,6 +903,7 @@ const NurseDashboard = () => {
         placeholder="Enter hematocrit value"
         value={patientData.hematocrit}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -902,6 +915,7 @@ const NurseDashboard = () => {
         placeholder="Enter CRP value"
         value={patientData.crp}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -916,6 +930,7 @@ const NurseDashboard = () => {
         placeholder="Enter RBS value"
         value={patientData.rbs}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -927,6 +942,7 @@ const NurseDashboard = () => {
         placeholder="Enter HbA1c value"
         value={patientData.hba1c}
         onChange={handleChange}
+        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
