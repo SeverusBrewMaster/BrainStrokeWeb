@@ -281,58 +281,35 @@ const extractRiskFactors = (patient, assessment) => {
 
 // Fixed generateChartImages function
 const generateChartImages = async (patient, assessment, riskFactors) => {
-    // Function to categorize risk factors - updated with new controlled/uncontrolled categories
-    const categorizeRiskFactors = (riskFactors) => {
-        const categories = {
-            Clinical: [],
-            Lifestyle: [],
-            Background: []
-        };
-
-        // Define the exact factors from extractRiskFactors function
-        const clinicalFactors = [
-            'Controlled Hypertension',
-            'Uncontrolled Hypertension',
-            'Atrial Fibrillation',
-            'Controlled Diabetes',
-            'Uncontrolled Diabetes',
-            'Borderline Lipid Profile',
-            'High Risk Lipid Profile',
-            'History of TIA'
-        ];
-
-        const lifestyleFactors = [
-            'Smoking/Tobacco',
-            'Alcohol Abuse',
-            'High Stress',
-            'Lack of Exercise',
-            'High BMI',
-            'Sleep Deprivation'
-        ];
-
-        const backgroundFactors = [
-            'Age > 60',
-            'Poor Air Quality',
-            'Family History'
-        ];
-
-        riskFactors.forEach(factor => {
-            if (clinicalFactors.includes(factor)) {
-                categories.Clinical.push(factor);
-            } else if (lifestyleFactors.includes(factor)) {
-                categories.Lifestyle.push(factor);
-            } else if (backgroundFactors.includes(factor)) {
-                categories.Background.push(factor);
-            }
-        });
-
-        return categories;
+  // Function to categorize risk factors
+  const categorizeRiskFactors = (riskFactors) => {
+    const categories = {
+      Clinical: [],
+      Lifestyle: [],
+      Background: []
     };
 
-    // Function to assign impact scores to risk factors - using EXACT factor names
-    const getRiskFactorImpacts = (riskFactors) => {
-        const impactMap = {
-            // Hypertension scoring
+    const clinicalFactors = ['Hypertension', 'Diabetes', 'High Cholesterol', 'Heart Disease', 'Atrial Fibrillation', 'Previous Stroke/TIA', 'Carotid Artery Disease'];
+    const lifestyleFactors = ['Smoking', 'Physical Inactivity', 'Obesity', 'Excessive Alcohol', 'Poor Diet'];
+    const backgroundFactors = ['Age > 65', 'Male Gender', 'Family History', 'Race/Ethnicity'];
+
+    riskFactors.forEach(factor => {
+      if (clinicalFactors.some(cf => factor.toLowerCase().includes(cf.toLowerCase()))) {
+        categories.Clinical.push(factor);
+      } else if (lifestyleFactors.some(lf => factor.toLowerCase().includes(lf.toLowerCase()))) {
+        categories.Lifestyle.push(factor);
+      } else {
+        categories.Background.push(factor);
+      }
+    });
+
+    return categories;
+  };
+
+  // Function to assign impact scores to risk factors
+  const getRiskFactorImpacts = (riskFactors) => {
+    const impactMap = {
+      // Hypertension scoring
             'Controlled Hypertension': 2,
             'Uncontrolled Hypertension': 3,
             
@@ -360,204 +337,208 @@ const generateChartImages = async (patient, assessment, riskFactors) => {
             'Age > 60': 1,
             'Poor Air Quality': 1,
             'Family History': 2
-        };
-
-        return riskFactors.map(factor => {
-            return {
-                factor: factor,
-                impact: impactMap[factor] || 1 // Default to 1 if not found
-            };
-        }).filter(item => item.impact > 0); // Filter out risk factors with 0 impact score
     };
 
-    const riskFactorImpacts = getRiskFactorImpacts(riskFactors);
-    const filteredRiskFactors = riskFactorImpacts.map(item => item.factor);
-    const categories = categorizeRiskFactors(filteredRiskFactors);
-
-    if (riskFactorImpacts.length === 0) {
+    return riskFactors.map(factor => {
+      // Find matching impact score
+      const matchingKey = Object.keys(impactMap).find(key => 
+        factor.toLowerCase().includes(key.toLowerCase())
+      );
       return {
-        chart1Image: null,
-        chart2Image: null,
-        message: "No risk factors with impact scores greater than 0 found."
+        factor: factor,
+        impact: matchingKey ? impactMap[matchingKey] : 1
       };
-    }
-
-    // Create canvas elements with explicit styling
-    const canvas1 = document.createElement('canvas');
-    const canvas2 = document.createElement('canvas');
-    canvas1.width = 400;
-    canvas1.height = 400;
-    canvas2.width = 400;
-    canvas2.height = 400;
-
-    // IMPORTANT: Set canvas background to white
-    const ctx1 = canvas1.getContext('2d');
-    const ctx2 = canvas2.getContext('2d');
-
-    // Fill canvas with white background before creating charts
-    ctx1.fillStyle = 'white';
-    ctx1.fillRect(0, 0, canvas1.width, canvas1.height);
-    ctx2.fillStyle = 'white';
-    ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
-
-    // Build category data arrays simultaneously
-    const categoryData = [];
-    const categoryLabels = [];
-    const categoryColors = [];
-
-    if (categories.Clinical.length > 0) {
-      categoryData.push(categories.Clinical.length);
-      categoryLabels.push('Clinical');
-      categoryColors.push('#dc2626');
-    }
-    if (categories.Lifestyle.length > 0) {
-      categoryData.push(categories.Lifestyle.length);
-      categoryLabels.push('Lifestyle');
-      categoryColors.push('#f59e0b');
-    }
-    if (categories.Background.length > 0) {
-      categoryData.push(categories.Background.length);
-      categoryLabels.push('Background');
-      categoryColors.push('#2563eb');
-    }
-
-    let chart1 = null;
-    if (categoryData.length > 0) {
-      chart1 = new Chart(ctx1, {
-        type: 'pie',
-        data: {
-          labels: categoryLabels,
-          datasets: [{
-            data: categoryData,
-            backgroundColor: categoryColors,
-            borderWidth: 2,
-            borderColor: '#fff'
-          }]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: true,
-          animation: {
-            duration: 0 // Disable animations for cleaner export
-          },
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                font: {
-                  size: 14
-                },
-                padding: 20
-              }
-            },
-            title: {
-              display: true,
-              text: 'Risk Factors by Category',
-              font: {
-                size: 16,
-                weight: 'bold'
-              },
-              padding: 20
-            }
-          }
-        }
-      });
-    }
-
-    // Chart 2: Risk Factor Impact Scores
-    const impactLabels = riskFactorImpacts.map(item => item.factor);
-    const impactData = riskFactorImpacts.map(item => item.impact);
-
-    const impactColors = impactData.map(impact => {
-      switch(impact) {
-          case 4: return '#dc2626'; 
-          case 3: return '#f59e0b'; 
-          case 2: return '#10b981'; 
-          case 1: return '#3b82f6'; 
-          default: return '#8b5cf6'; 
-        }
-    });
-
-    let chart2 = null;
-    if (impactData.length > 0) {
-      chart2 = new Chart(ctx2, {
-        type: 'pie',
-        data: {
-          labels: impactLabels,
-          datasets: [{
-            data: impactData,
-            backgroundColor: impactColors,
-            borderWidth: 2,
-            borderColor: '#fff'
-          }]
-        },
-        options: {
-          responsive: false,
-          maintainAspectRatio: true,
-          animation: {
-            duration: 0 // Disable animations for cleaner export
-          },
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                font: {
-                  size: 12
-                },
-                padding: 15,
-                generateLabels: function(chart) {
-                  const data = chart.data;
-                  return data.labels.map((label, index) => ({
-                    text: `${label} (${data.datasets[0].data[index]})`,
-                    fillStyle: data.datasets[0].backgroundColor[index],
-                    strokeStyle: data.datasets[0].borderColor,
-                    lineWidth: data.datasets[0].borderWidth
-                  }));
-                }
-              }
-            },
-            title: {
-              display: true,
-              text: 'Risk Factor Impact Scores (1-4)',
-              font: {
-                size: 16,
-                weight: 'bold'
-              },
-              padding: 20
-            }
-          }
-        }
-      });
-    }
-
-    // Wait longer for charts to fully render
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Alternative approach: Force chart updates before export
-    if (chart1) {
-      chart1.update('none'); // Update without animation
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    if (chart2) {
-      chart2.update('none'); // Update without animation
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    // Convert charts to base64 images with higher quality
-    const chart1Image = chart1 ? canvas1.toDataURL('image/png', 1.0) : null;
-    const chart2Image = chart2 ? canvas2.toDataURL('image/png', 1.0) : null;
-
-    // Clean up
-    if (chart1) chart1.destroy();
-    if (chart2) chart2.destroy();
-
-    return { 
-      chart1Image, 
-      chart2Image,
-      hasValidData: riskFactorImpacts.length > 0,
-      filteredRiskFactorsCount: riskFactorImpacts.length
-    };
+    }).filter(item => item.impact > 0); // Filter out risk factors with 0 impact score
   };
+
+  const riskFactorImpacts = getRiskFactorImpacts(riskFactors);
+  const filteredRiskFactors = riskFactorImpacts.map(item => item.factor);
+  const categories = categorizeRiskFactors(filteredRiskFactors);
+
+  if (riskFactorImpacts.length === 0) {
+    return {
+      chart1Image: null,
+      chart2Image: null,
+      message: "No risk factors with impact scores greater than 0 found."
+    };
+  }
+
+  // Create canvas elements with explicit styling
+  const canvas1 = document.createElement('canvas');
+  const canvas2 = document.createElement('canvas');
+  canvas1.width = 400;
+  canvas1.height = 400;
+  canvas2.width = 400;
+  canvas2.height = 400;
+  
+  // IMPORTANT: Set canvas background to white
+  const ctx1 = canvas1.getContext('2d');
+  const ctx2 = canvas2.getContext('2d');
+  
+  // Fill canvas with white background before creating charts
+  ctx1.fillStyle = 'white';
+  ctx1.fillRect(0, 0, canvas1.width, canvas1.height);
+  ctx2.fillStyle = 'white';
+  ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+
+  // Build category data arrays simultaneously
+  const categoryData = [];
+  const categoryLabels = [];
+  const categoryColors = [];
+  
+  if (categories.Clinical.length > 0) {
+    categoryData.push(categories.Clinical.length);
+    categoryLabels.push('Clinical');
+    categoryColors.push('#dc2626');
+  }
+  if (categories.Lifestyle.length > 0) {
+    categoryData.push(categories.Lifestyle.length);
+    categoryLabels.push('Lifestyle');
+    categoryColors.push('#f59e0b');
+  }
+  if (categories.Background.length > 0) {
+    categoryData.push(categories.Background.length);
+    categoryLabels.push('Background');
+    categoryColors.push('#2563eb');
+  }
+
+  let chart1 = null;
+  if (categoryData.length > 0) {
+    chart1 = new Chart(ctx1, {
+      type: 'pie',
+      data: {
+        labels: categoryLabels,
+        datasets: [{
+          data: categoryData,
+          backgroundColor: categoryColors,
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: true,
+        animation: {
+          duration: 0 // Disable animations for cleaner export
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              font: {
+                size: 14
+              },
+              padding: 20
+            }
+          },
+          title: {
+            display: true,
+            text: 'Risk Factors by Category',
+            font: {
+              size: 16,
+              weight: 'bold'
+            },
+            padding: 20
+          }
+        }
+      }
+    });
+  }
+
+  // Chart 2: Risk Factor Impact Scores
+  const impactLabels = riskFactorImpacts.map(item => item.factor);
+  const impactData = riskFactorImpacts.map(item => item.impact);
+  
+  const impactColors = impactData.map(impact => {
+    switch(impact) {
+        case 4: return '#dc2626'; 
+        case 3: return '#f59e0b'; 
+        case 2: return '#10b981'; 
+        case 1: return '#3b82f6'; 
+        default: return '#8b5cf6'; 
+      }
+  });
+
+  let chart2 = null;
+  if (impactData.length > 0) {
+    chart2 = new Chart(ctx2, {
+      type: 'pie',
+      data: {
+        labels: impactLabels,
+        datasets: [{
+          data: impactData,
+          backgroundColor: impactColors,
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: false,
+        maintainAspectRatio: true,
+        animation: {
+          duration: 0 // Disable animations for cleaner export
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              font: {
+                size: 12
+              },
+              padding: 15,
+              generateLabels: function(chart) {
+                const data = chart.data;
+                return data.labels.map((label, index) => ({
+                  text: `${label} (${data.datasets[0].data[index]})`,
+                  fillStyle: data.datasets[0].backgroundColor[index],
+                  strokeStyle: data.datasets[0].borderColor,
+                  lineWidth: data.datasets[0].borderWidth
+                }));
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Risk Factor Impact Scores (1-4)',
+            font: {
+              size: 16,
+              weight: 'bold'
+            },
+            padding: 20
+          }
+        }
+      }
+    });
+  }
+
+  // Wait longer for charts to fully render
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Alternative approach: Force chart updates before export
+  if (chart1) {
+    chart1.update('none'); // Update without animation
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  if (chart2) {
+    chart2.update('none'); // Update without animation
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  // Convert charts to base64 images with higher quality
+  const chart1Image = chart1 ? canvas1.toDataURL('image/png', 1.0) : null;
+  const chart2Image = chart2 ? canvas2.toDataURL('image/png', 1.0) : null;
+
+  // Clean up
+  if (chart1) chart1.destroy();
+  if (chart2) chart2.destroy();
+
+  return { 
+    chart1Image, 
+    chart2Image,
+    hasValidData: riskFactorImpacts.length > 0,
+    filteredRiskFactorsCount: riskFactorImpacts.length
+  };
+};
 
   // Helper function to get categorized risk factors if needed elsewhere
 const getCategorizedRiskFactors = (patient, assessment) => {
@@ -946,263 +927,342 @@ const getCategorizedRiskFactors = (patient, assessment) => {
   };
 
   const sendToWhatsApp = async () => {
-    if (!selectedPatient?.phone) {
-      alert("Phone number is missing.");
-      return;
-    }
+  if (!selectedPatient?.phone) {
+    alert("Phone number is missing.");
+    return;
+  }
 
-    try {
-      const patient = selectedPatient;
-      const assessment = selectedAssessment;
-      const riskFactors = extractRiskFactors(patient, assessment);
-      const note = doctorNote || "No specific recommendations provided at this time.";
-      const logoUrl = logo;
-      const timestamp = new Date().toLocaleString();
+  try {
+    const patient = selectedPatient;
+    const assessment = selectedAssessment;
+    const riskFactors = extractRiskFactors(patient, assessment);
+    const note = doctorNote || "No specific recommendations provided at this time.";
+    const logoUrl = logo;
+    const timestamp = new Date().toLocaleString();
 
-      // Generate chart images with proper error handling
-      let chartSectionHTML = '';
-      let hasValidData = false;
-      let chart1Image = null;
-      let chart2Image = null;
-      let filteredRiskFactorsCount = 0;
+    // Generate chart images (same as generatePDF function)
+    const { chart1Image, chart2Image, hasValidData, filteredRiskFactorsCount } = await generateChartImages(patient, assessment, riskFactors);
 
-      try {
-        const chartData = await generateChartImages(patient, assessment, riskFactors);
-        hasValidData = chartData.hasValidData;
-        chart1Image = chartData.chart1Image;
-        chart2Image = chartData.chart2Image;
-        filteredRiskFactorsCount = chartData.filteredRiskFactorsCount;
-      } catch (chartError) {
-        console.warn("Chart generation failed, proceeding without charts:", chartError);
-        hasValidData = false;
-      }
+    // Sanitize patient name for filename
+    const sanitizedPatientName = patient.name.replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `${sanitizedPatientName}_Brainline_Report.pdf`;
 
-      // Sanitize patient name for filename
-      const sanitizedPatientName = patient.name.replace(/[^a-zA-Z0-9]/g, '_');
-      const fileName = `${sanitizedPatientName}_Brainline_Report.pdf`;
+    // Create and style PDF content
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
+    pdfContainer.style.fontSize = '14px';
+    pdfContainer.style.lineHeight = '1.5';
+    pdfContainer.style.color = '#333';
+    pdfContainer.style.padding = '20px';
+    pdfContainer.style.backgroundColor = 'white';
 
-      // Create and style PDF content
-      const pdfContainer = document.createElement('div');
-      pdfContainer.style.fontFamily = 'Arial, sans-serif';
-      pdfContainer.style.fontSize = '14px';
-      pdfContainer.style.lineHeight = '1.5';
-      pdfContainer.style.color = '#333';
-      pdfContainer.style.padding = '20px';
-      pdfContainer.style.backgroundColor = 'white';
-
-      // Determine chart section content based on whether we have valid data
-      if (hasValidData && chart1Image && chart2Image) {
-        chartSectionHTML = `
-          <div style="margin-bottom: 20px; page-break-inside: avoid;">
-            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
-            <div style="display: flex; justify-content: space-between; gap: 20px;">
-              <div style="width: 48%; text-align: center;">
-                <img src="${chart1Image}" style="width: 100%; max-width: 300px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px;" alt="Risk Factors by Category">
-              </div>
-              <div style="width: 48%; text-align: center;">
-                <img src="${chart2Image}" style="width: 100%; max-width: 300px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px;" alt="Risk Factor Impact Scores">
-              </div>
-            </div>
-            <div style="margin-top: 10px; font-size: 11px; color: #666; text-align: center;">
-              <p style="margin: 5px 0;"><strong>Left:</strong> Distribution of risk factors across Clinical, Lifestyle, and Background categories</p>
-              <p style="margin: 5px 0;"><strong>Right:</strong> Individual risk factor impact scores</p>
-            </div>
-          </div>
-        `;
-      } else {
-        chartSectionHTML = `
-          <div style="margin-bottom: 20px; page-break-inside: avoid;">
-            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
-            <div style="background: #f9fafb; border: 2px dashed #d1d5db; padding: 30px; text-align: center; border-radius: 8px;">
-              <p style="margin: 0; font-size: 14px; color: #6b7280;">
-                <strong>No significant risk factors detected</strong><br>
-                All identified risk factors have minimal impact scores (≤ 0). This indicates a lower risk profile.
-              </p>
-            </div>
-          </div>
-        `;
-      }
-
-      // Enhanced PDF content with conditional charts
-      pdfContainer.innerHTML = `
-        <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #2563eb; padding-bottom: 15px;">
-          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-              <div style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: white; font-weight: bold; font-size: 20px; overflow: hidden;">
-                  <img src="${logoUrl}" 
-                       alt="Brainline Logo" 
-                       style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" 
-                       crossorigin="anonymous"
-                       onerror="this.style.display='none'; this.parentElement.innerHTML='BL';" />
-              </div>
-              <div style="text-align: left;">
-                  <h1 style="margin: 0; color: #2563eb; font-size: 24px; font-weight: bold;">BRAINLINE</h1>
-                  <p style="margin: 2px 0; font-size: 14px; color: #666; font-weight: 500;">Purva Medical Trust</p>
-                  <p style="margin: 2px 0; font-size: 12px; color: #888;">A Mission to Spread Stroke Prevention Awareness</p>
-              </div>
-          </div>
-          <h2 style="margin: 10px 0 0 0; color: #1f2937; font-size: 22px; font-weight: 600;">Brain Stroke Risk Assessment Report</h2>
-          <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Generated on ${timestamp}</p>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-          <div style="width: 48%;">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Patient Information</h3>
-            <table style="width: 100%; font-size: 13px;">
-              <tr><td style="padding: 3px 0;"><strong>Name:</strong></td><td>${patient.name}</td></tr>
-              <tr><td style="padding: 3px 0;"><strong>Token:</strong></td><td>${patient.tokenNumber}</td></tr>
-              <tr><td style="padding: 3px 0;"><strong>Age/Gender:</strong></td><td>${patient.age} / ${patient.gender}</td></tr>
-              <tr><td style="padding: 3px 0;"><strong>Phone:</strong></td><td>${patient.phone}</td></tr>
-              <tr><td style="padding: 3px 0;"><strong>Location:</strong></td><td>${patient.locality}</td></tr>
-            </table>
-          </div>
-
-          <div style="width: 48%;">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Assessment</h3>
-            <div style="background: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#fef2f2' : '#fff7ed'}; 
-                        border: 2px solid ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'}; 
-                        padding: 15px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-              <div style="font-size: 18px; font-weight: bold; color: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'};">
-                ${assessment.riskAssessment?.riskCategory || 'N/A'}
-              </div>
-              <div style="font-size: 14px; margin-top: 5px;">Risk Score: ${assessment.riskAssessment?.riskScore || 'N/A'}</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
-            ${[
-              { label: 'BP', value: patient.bloodPressure },
-              { label: 'BMI', value: patient.bmi },
-              { label: 'RBS', value: patient.rbs || 'N/A' },
-              { label: 'HbA1c', value: patient.hba1c || 'N/A' },
-              { label: 'Cholesterol', value: patient.cholesterol || 'N/A' },
-              { label: 'HDL/LDL', value: `${patient.hdl}/${patient.ldl}` },
-              { label: 'Hemoglobin', value: patient.hemoglobin || 'N/A' },
-              { label: 'Platelets', value: patient.platelets || 'N/A' }
-            ].map(test => `
-              <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
-                <div style="font-weight: bold; margin-bottom: 4px;">${test.label}</div>
-                <div>${test.value}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        ${chartSectionHTML}
-
-        <!-- PAGE BREAK - Forces new page before Risk Factor Analysis -->
-        <div style="page-break-before: always;"></div>
-
-        <div style="margin-bottom: 15px; page-break-inside: avoid;">
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factors</h3>
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px;">
-            ${riskFactors.map(factor => `
-              <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 35px;">
-                ${factor}
-              </div>
-            `).join('')}
-          </div>
-        </div>
-            
+    // Determine chart section content based on whether we have valid data
+    let chartSectionHTML = '';
+    if (hasValidData && chart1Image && chart2Image) {
+      chartSectionHTML = `
         <div style="margin-bottom: 20px; page-break-inside: avoid;">
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Doctor's Recommendation</h3>
-          <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
-            <div style="width: 100%;">${note}</div>
+          <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
+          <div style="display: flex; justify-content: space-between; gap: 20px;">
+            <div style="width: 48%; text-align: center;">
+              <img src="${chart1Image}" style="width: 100%; max-width: 300px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px;" alt="Risk Factors by Category">
+            </div>
+            <div style="width: 48%; text-align: center;">
+              <img src="${chart2Image}" style="width: 100%; max-width: 300px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px;" alt="Risk Factor Impact Scores">
+            </div>
           </div>
-        </div>
-            
-        <!-- Disclaimer -->
-          <div style="margin-bottom: 20px; background: #fffbeb; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; page-break-inside: avoid;">
-              <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #92400e; display: flex; align-items: center;">
-                  <span style="margin-right: 8px;">⚠️</span>
-                  Important Disclaimer
-              </h3>
-              <div style="font-size: 12px; color: #78350f; line-height: 1.6;">
-                  <p style="margin: 0 0 10px 0;">
-                      <strong>Risk Assessment Period:</strong> This Brainline Riskometer assessment estimates your stroke risk over the next <strong>5 years</strong> based on current risk factors. This timeframe is chosen because most risk factors (hypertension, diabetes, cholesterol levels) are dynamic and can be improved through lifestyle changes and medical intervention.
-                  </p>
-                  <p style="margin: 0 0 10px 0;">
-                      <strong>Clinical Limitations:</strong> This assessment is a screening tool and should not replace professional medical consultation. Individual risk may vary based on factors not captured in this assessment.
-                  </p>
-                  <p style="margin: 0;">
-                      <strong>Action Required:</strong> Consult with your healthcare provider to discuss these results and develop an appropriate prevention strategy tailored to your specific health profile.
-                  </p>
-              </div>
+          <div style="margin-top: 10px; font-size: 11px; color: #666; text-align: center;">
+            <p style="margin: 5px 0;"><strong>Left:</strong> Distribution of risk factors across Clinical, Lifestyle, and Background categories</p>
+            <p style="margin: 5px 0;"><strong>Right:</strong> Individual risk factor impact scores</p>
           </div>
-            
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 15px; text-align: center; font-size: 12px; color: #666;">
-          <p style="margin: 0;">Report generated by <strong>Dr. Ashok Hande</strong></p>
-          <p style="margin: 8px 0 0 0;">For queries, visit: <a href="https://brainline.info/" style="color: #2563eb;">brainline.info</a></p>
         </div>
       `;
-            
-      document.body.appendChild(pdfContainer);
-
-      // Wait to ensure DOM is fully rendered
-      await new Promise(res => setTimeout(res, 100));
-
-      // Generate PDF as a Blob with same options as generatePDF function
-      const pdfOptions = {
-        margin: [10, 10, 10, 10],
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          letterRendering: true
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait'
-        }
-      };
-
-      const pdfBlob = await html2pdf()
-        .from(pdfContainer)
-        .set(pdfOptions)
-        .outputPdf('blob');
-
-      document.body.removeChild(pdfContainer);
-
-      // Upload to Cloudinary
-      const formData = new FormData();
-      formData.append('file', pdfBlob);
-      formData.append('upload_preset', 'unsigned_pdf');
-      formData.append('public_id', fileName.replace('.pdf', ''));
-
-      const uploadRes = await axios.post(
-        'https://api.cloudinary.com/v1_1/dcyyf8odw/raw/upload',
-        formData
-      );
-
-      // Force PDF download filename
-      const downloadURL = uploadRes.data.secure_url + `?fl_attachment=${fileName}`;
-
-      // Open WhatsApp with link
-      const phone = patient.phone.replace(/\D/g, '');
-      const message = encodeURIComponent(`Hello ${patient.name},
-
-Your brain stroke risk report has been generated. 🧠
-
-📊 Risk Level: ${assessment?.riskAssessment?.riskCategory || 'N/A'}
-📋 Risk Score: ${assessment?.riskAssessment?.riskScore || 'N/A'}
-
-📥 Download your report:
-${downloadURL}
-
-Stay healthy,
-Dr. Ashok Hande
-brainline.info`);
-
-      window.open(`https://wa.me/91${phone}?text=${message}`, '_blank');
-
-    } catch (error) {
-      console.error("Failed to generate/send report:", error);
-      alert("Something went wrong. Please try again.");
+    } else {
+      chartSectionHTML = `
+        <div style="margin-bottom: 20px; page-break-inside: avoid;">
+          <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factor Analysis</h3>
+          <div style="background: #f9fafb; border: 2px dashed #d1d5db; padding: 30px; text-align: center; border-radius: 8px;">
+            <p style="margin: 0; font-size: 14px; color: #6b7280;">
+              <strong>No significant risk factors detected</strong><br>
+              All identified risk factors have minimal impact scores (≤ 0). This indicates a lower risk profile.
+            </p>
+          </div>
+        </div>
+      `;
     }
-  };
+
+    // Enhanced PDF content with comprehensive Purva Medical Trust details (EXACTLY like generatePDF)
+    pdfContainer.innerHTML = `
+      <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #2563eb; padding-bottom: 15px;">
+              <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                  <div style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: white; font-weight: bold; font-size: 20px; overflow: hidden;">
+                      <img src="${logoUrl}" 
+                           alt="Brainline Logo" 
+                           style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" 
+                           crossorigin="anonymous"
+                           onerror="this.style.display='none'; this.parentElement.innerHTML='BL';" />
+                  </div>
+                  <div style="text-align: left;">
+                      <h1 style="margin: 0; color: #2563eb; font-size: 24px; font-weight: bold;">BRAINLINE</h1>
+                      <p style="margin: 2px 0; font-size: 14px; color: #666; font-weight: 500;">Purva Medical Trust</p>
+                      <p style="margin: 2px 0; font-size: 12px; color: #888;">A Mission to Spread Stroke Prevention Awareness</p>
+                  </div>
+              </div>
+              <h2 style="margin: 10px 0 0 0; color: #1f2937; font-size: 22px; font-weight: 600;">Brain Stroke Risk Assessment Report</h2>
+              <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Generated on ${timestamp}</p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+              <div style="width: 48%;">
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Patient Information</h3>
+                <table style="width: 100%; font-size: 13px;">
+                  <tr><td style="padding: 3px 0;"><strong>Name:</strong></td><td>${patient.name}</td></tr>
+                  <tr><td style="padding: 3px 0;"><strong>Token:</strong></td><td>${patient.tokenNumber}</td></tr>
+                  <tr><td style="padding: 3px 0;"><strong>Age/Gender:</strong></td><td>${patient.age} / ${patient.gender}</td></tr>
+                  <tr><td style="padding: 3px 0;"><strong>Phone:</strong></td><td>${patient.phone}</td></tr>
+                  <tr><td style="padding: 3px 0;"><strong>Location:</strong></td><td>${patient.locality}</td></tr>
+                </table>
+              </div>
+
+              <div style="width: 48%;">
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Assessment</h3>
+                <div style="background: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#fef2f2' : '#fff7ed'}; 
+                            border: 2px solid ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'}; 
+                            padding: 15px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                  <div style="font-size: 18px; font-weight: bold; color: ${assessment.riskAssessment?.riskCategory === 'High Risk' ? '#dc2626' : '#f59e0b'};">
+                    ${assessment.riskAssessment?.riskCategory || 'N/A'}
+                  </div>
+                  <div style="font-size: 14px; margin-top: 5px;">Risk Score: ${assessment.riskAssessment?.riskScore || 'N/A'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Vital Signs & Key Tests</h3>
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px;">
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">BP</div>
+                  <div>${patient.bloodPressure}</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">BMI</div>
+                  <div>${patient.bmi}</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">RBS</div>
+                  <div>${patient.rbs || 'N/A'}</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">HbA1c</div>
+                  <div>${patient.hba1c || 'N/A'}</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">Cholesterol</div>
+                  <div>${patient.cholesterol || 'N/A'}</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">HDL/LDL</div>
+                  <div>${patient.hdl}/${patient.ldl}</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">Hemoglobin</div>
+                  <div>${patient.hemoglobin || 'N/A'}</div>
+                </div>
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 50px;">
+                  <div style="font-weight: bold; margin-bottom: 4px;">Platelets</div>
+                  <div>${patient.platelets || 'N/A'}</div>
+                </div>
+              </div>
+            </div>
+
+            ${chartSectionHTML}
+
+            <!-- PAGE BREAK - Forces new page before Risk Factor Analysis -->
+            <div style="page-break-before: always;"></div>
+
+            <div style="margin-bottom: 15px; page-break-inside: avoid;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Risk Factors</h3>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px;">
+                ${riskFactors.map(factor => `
+                  <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 8px 10px; border-radius: 6px; text-align: center; display: flex; justify-content: center; align-items: center; min-height: 35px;">
+                    ${factor}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+                
+            <div style="margin-bottom: 20px; page-break-inside: avoid;">
+              <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Doctor's Recommendation</h3>
+              <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
+                <div style="width: 100%;">${doctorNote || 'No specific recommendations provided at this time.'}</div>
+              </div>
+            </div>
+                
+            <!-- Disclaimer -->
+            <div style="margin-bottom: 20px; background: #fffbeb; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; page-break-inside: avoid;">
+                <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #92400e; display: flex; align-items: center;">
+                    <span style="margin-right: 8px;">⚠️</span>
+                    Important Disclaimer
+                </h3>
+                <div style="font-size: 12px; color: #78350f; line-height: 1.6;">
+                    <p style="margin: 0 0 10px 0;">
+                        <strong>Risk Assessment Period:</strong> This Brainline Riskometer assessment estimates your stroke risk over the next <strong>5 years</strong> based on current risk factors. This timeframe is chosen because most risk factors (hypertension, diabetes, cholesterol levels) are dynamic and can be improved through lifestyle changes and medical intervention.
+                    </p>
+                    <p style="margin: 0 0 10px 0;">
+                        <strong>Clinical Limitations:</strong> This assessment is a screening tool and should not replace professional medical consultation. Individual risk may vary based on factors not captured in this assessment.
+                    </p>
+                    <p style="margin: 0;">
+                        <strong>Action Required:</strong> Consult with your healthcare provider to discuss these results and develop an appropriate prevention strategy tailored to your specific health profile.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Enhanced Footer with Purva Medical Trust Details -->
+            <div style="border-top: 2px solid #2563eb; padding-top: 20px; margin-top: 30px; background: #f8fafc; padding: 20px; border-radius: 8px;">
+              <div style="text-align: center; margin-bottom: 15px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #2563eb; font-weight: bold;">About Purva Medical Trust</h3>
+                <p style="margin: 0 0 15px 0; font-size: 12px; color: #666; line-height: 1.5;">
+                  Purva Medical Trust is committed to spreading stroke prevention awareness and improving healthcare accessibility. 
+                  Our mission is to empower individuals with knowledge and tools for better health outcomes.
+                </p>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px;">
+                <!-- Contact & Website Section -->
+                <div style="text-align: center;">
+                  <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1f2937; font-weight: bold;">🌐 Online Resources</h4>
+                  <div style="font-size: 12px; color: #666; line-height: 1.8;">
+                    <p style="margin: 2px 0;"><strong>Official Website:</strong><br>
+                       <a href="https://brainline.info/" style="color: #2563eb; text-decoration: none; font-weight: 500;">brainline.info</a>
+                    </p>
+                    <p style="margin: 2px 0;"><strong>Email:</strong><br>
+                       <a href="mailto:contact@brainline.info" style="color: #2563eb; text-decoration: none;">contact@brainline.info</a>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Social Media & Content Section -->
+                <div style="text-align: center;">
+                  <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1f2937; font-weight: bold;">📱 Follow Us</h4>
+                  <div style="font-size: 12px; color: #666; line-height: 1.8;">
+                    <p style="margin: 2px 0;"><strong>YouTube Channel:</strong><br>
+                       <a href="https://youtube.com/@brainlineinfo" style="color: #2563eb; text-decoration: none;">@brainlineinfo</a>
+                    </p>
+                    <p style="margin: 2px 0;"><strong>Podcast:</strong><br>
+                       <span style="color: #2563eb;">"Brainline Health Talks"</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Educational Content Section -->
+              <div style="background: #ffffff; border: 1px solid #e5e7eb; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1f2937; font-weight: bold; text-align: center;">📚 Educational Resources Available</h4>
+                <div style="font-size: 11px; color: #666; text-align: center; line-height: 1.6;">
+                  <p style="margin: 5px 0;">✓ Stroke Prevention Guides &nbsp;&nbsp; ✓ Healthy Lifestyle Tips &nbsp;&nbsp; ✓ Risk Assessment Tools</p>
+                  <p style="margin: 5px 0;">✓ Expert Interviews &nbsp;&nbsp; ✓ Patient Success Stories &nbsp;&nbsp; ✓ Medical Q&A Sessions</p>
+                  <p style="margin: 5px 0; font-style: italic;">Visit our website and subscribe to our channel for regular health updates!</p>
+                </div>
+              </div>
+
+              <!-- Social Media Links Grid -->
+              <div style="text-align: center; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1f2937; font-weight: bold;">Connect With Us</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px;">
+                  <div style="background: #3b82f6; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">Facebook</div>
+                    <div style="font-size: 10px;">@PurvaMedicalTrust</div>
+                  </div>
+                  <div style="background: #1da1f2; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">Twitter</div>
+                    <div style="font-size: 10px;">@BrainlineInfo</div>
+                  </div>
+                  <div style="background: #0e76a8; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">LinkedIn</div>
+                    <div style="font-size: 10px;">Purva Medical Trust</div>
+                  </div>
+                  <div style="background: #25d366; color: white; padding: 8px; border-radius: 4px; text-align: center;">
+                    <div style="font-weight: bold; margin-bottom: 2px;">WhatsApp</div>
+                    <div style="font-size: 10px;">Health Updates</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Generation Info -->
+              <div style="text-align: center; font-size: 11px; color: #666; border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                <p style="margin: 0 0 5px 0;">Report generated by <strong>Dr. Ashok Hande</strong> | Lead Physician, Purva Medical Trust</p>
+                <p style="margin: 0 0 5px 0;"><strong>For medical consultations:</strong> Schedule an appointment through our website</p>
+                <p style="margin: 0; font-style: italic;">This report is part of our commitment to preventive healthcare and community wellness.</p>
+              </div>
+            </div>
+          `;
+          
+    document.body.appendChild(pdfContainer);
+
+    // Wait to ensure DOM is fully rendered
+    await new Promise(res => setTimeout(res, 100));
+
+    // Generate PDF as a Blob with same options as generatePDF function
+    const pdfOptions = {
+      margin: [10, 10, 10, 10],
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        letterRendering: true
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+      }
+    };
+
+    const pdfBlob = await html2pdf()
+      .from(pdfContainer)
+      .set(pdfOptions)
+      .outputPdf('blob');
+
+    document.body.removeChild(pdfContainer);
+
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', pdfBlob);
+    formData.append('upload_preset', 'unsigned_pdf');
+    formData.append('public_id', fileName.replace('.pdf', ''));
+
+    const uploadRes = await axios.post(
+      'https://api.cloudinary.com/v1_1/dcyyf8odw/raw/upload',
+      formData
+    );
+
+    // Force PDF download filename
+    const downloadURL = uploadRes.data.secure_url + `?fl_attachment=${fileName}`;
+
+    // Open WhatsApp with link
+    const phone = patient.phone.replace(/\D/g, '');
+    const message = encodeURIComponent(`
+      Hello ${patient.name},
+
+      Your brain stroke risk report has been generated. 🧠
+
+      📊 Risk Level: ${assessment?.riskAssessment?.riskCategory || 'N/A'}
+      📋 Risk Score: ${assessment?.riskAssessment?.riskScore || 'N/A'}
+
+      📥 Download your report:
+      ${downloadURL}
+
+      Stay healthy,
+      Dr. Ashok Hande
+      brainline.info
+    `);
+
+    window.open(`https://wa.me/91${phone}?text=${message}`, '_blank');
+
+  } catch (error) {
+    console.error("Failed to generate/send report:", error);
+    alert("Something went wrong. Please try again.");
+  }
+};
 
     const handleLogout = () => {
     showModal('info', 'Logout Confirmation', 'Are you sure you want to logout?', true, () => {
