@@ -11,8 +11,8 @@ import {
 } from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 import logo from '../components/logo1.png';
+import qrcode from '../components/qr_code.png';
 import axios from 'axios';
-import './DoctorDashboard.css';
 
 // Add this Modal component after your imports
 const Modal = ({ isOpen, onClose, type = 'info', title, message, showConfirm = false, onConfirm }) => {
@@ -939,6 +939,9 @@ const getCategorizedRiskFactors = (patient, assessment) => {
     const note = doctorNote || "No specific recommendations provided at this time.";
     const logoUrl = logo;
     const timestamp = new Date().toLocaleString();
+    
+    // Add your WhatsApp community QR code URL here
+    const whatsappQRCodeUrl = qrcode; // Replace with actual QR code URL
 
     // Generate chart images (same as generatePDF function)
     const { chart1Image, chart2Image, hasValidData, filteredRiskFactorsCount } = await generateChartImages(patient, assessment, riskFactors);
@@ -1116,7 +1119,10 @@ const getCategorizedRiskFactors = (patient, assessment) => {
         </div>
       </div>
 
-      <!-- Enhanced Footer with Purva Medical Trust Details -->
+      <!-- PAGE BREAK - Forces new page before Social Media Section -->
+      <div style="page-break-before: always;"></div>
+
+      <!-- Enhanced Footer with Purva Medical Trust Details - NEW PAGE -->
       <div style="border-top: 2px solid #2563eb; padding-top: 20px; margin-top: 15px; background: #f8fafc; padding: 15px; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 15px;">
           <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #2563eb; font-weight: bold;">About Purva Medical Trust</h3>
@@ -1150,6 +1156,35 @@ const getCategorizedRiskFactors = (patient, assessment) => {
               <p style="margin: 2px 0;"><strong>Instagram Page:</strong><br>
                  <a href="https://www.instagram.com/brainline.info/" style="color: #2563eb; text-decoration: none;">@brainlineinfo</a>
               </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- WhatsApp Community QR Code Section -->
+        <div style="background: #ffffff; border: 2px solid #25d366; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+          <h4 style="margin: 0 0 15px 0; font-size: 16px; color: #25d366; font-weight: bold;">
+            💬 Join Our WhatsApp Community
+          </h4>
+          <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
+            <div style="text-align: center;">
+              <img src="${whatsappQRCodeUrl}" 
+                   alt="WhatsApp Community QR Code" 
+                   style="width: 120px; height: 120px; border: 2px solid #25d366; border-radius: 8px;" 
+                   crossorigin="anonymous"
+                   onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=&quot;width: 120px; height: 120px; background: #f0f0f0; border: 2px solid #25d366; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666;&quot;>QR Code<br>Not Available</div>';" />
+              <p style="margin: 8px 0 0 0; font-size: 10px; color: #666;">Scan to join</p>
+            </div>
+            <div style="text-align: left; flex: 1; max-width: 300px;">
+              <p style="margin: 0 0 10px 0; font-size: 13px; color: #333; line-height: 1.6;">
+                <strong>Join our health community for:</strong>
+              </p>
+              <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #666; line-height: 1.6;">
+                <li>Daily health tips & reminders</li>
+                <li>Expert medical advice</li>
+                <li>Stroke prevention updates</li>
+                <li>Community support & discussions</li>
+                <li>Live Q&A sessions with doctors</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -1250,6 +1285,8 @@ const getCategorizedRiskFactors = (patient, assessment) => {
         📥 Download your report:
         ${downloadURL}
 
+        💬 Join our WhatsApp community for daily health tips and expert advice!
+        
         Stay healthy,
         Dr. Ashok Hande
         brainline.info
