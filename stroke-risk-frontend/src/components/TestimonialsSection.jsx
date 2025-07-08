@@ -25,7 +25,7 @@ const TestimonialsSection = () => {
   return (
     <>
       <h2 className="text-uppercase text-center fw-bold">Our Testimonials</h2>
-      <section className="testimonial-section mt-5">
+      <section className="testimonial-section mt-5 ">
         <div className="testimonial-overlay"></div>
         <div className="container testimonial-container">
           <h2 className="fw-bold">Our Patients Say</h2>

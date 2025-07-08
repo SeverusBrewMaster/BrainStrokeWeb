@@ -7,14 +7,13 @@ const Header = () => {
       <div className="container navbar">
         <div className="logo">
           <img src="/images/Strokelogo.png" alt="StrokeCare Logo" />
-          StrokeCare
+          BrainLine
         </div>
         <ul className="nav-links">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/about">About Us</Link></li>
           <li><Link to="/risk">Riskometer</Link></li>
           <li><Link to="#">Help</Link></li>
-          <li><Link to="/assessments">View All Assessments</Link></li>
         </ul>
         <div className="profile-dropdown">
           <Link to="/user">
