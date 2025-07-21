@@ -4,7 +4,8 @@ import { Search, User, Heart, FileText, Save, AlertCircle, CheckCircle, Clock, A
 import { db } from "../firebase/firebase";
 import { 
   collection, 
-  getDocs, 
+  getDocs,
+  setDoc, 
   addDoc, 
   updateDoc, 
   doc, 
@@ -23,36 +24,45 @@ const MiddlemanDashboard = () => {
   // State for patient data
   const [patients, setPatients] = useState([]);
 
-//useEffect FOR FETCHING PATIENTS
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const q = query(collection(db, "patients"), orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ 
-          id: doc.id, 
-          ...doc.data(),
-          status: doc.data().status || 'Pending',
-          lastUpdated: doc.data().lastUpdated || new Date().toISOString().split('T')[0]
-        }));
-        setPatients(data);
-        calculatePeopleCount(data); // Use the new function
-      } catch (error) {
-        console.error("Error fetching patients:", error);
-        showErrorModal(
-          "Data Loading Error",
-          "Failed to load patient data. Please check your internet connection and try again.",
-          () => {
-            setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
-            // Retry the fetch
-            fetchPatients();
-          }
-        );
+useEffect(() => {
+  const fetchCampPatients = async () => {
+    try {
+      const selectedCamp = localStorage.getItem("selectedCamp");
+      if (!selectedCamp) {
+        throw new Error("Camp not selected.");
       }
-    };
 
-    fetchPatients();
-  }, []);
+      const q = query(
+        collection(db, `camps_metadata/${selectedCamp}/patients`),
+        orderBy("createdAt", "desc")
+      );
+      const snapshot = await getDocs(q);
+
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        status: doc.data().status || "Pending",
+        lastUpdated: doc.data().lastUpdated || new Date().toISOString().split("T")[0],
+      }));
+
+      setPatients(data);
+      calculatePeopleCount(data); // ✅ your function remains
+    } catch (error) {
+      console.error("Error fetching camp patients:", error);
+      showErrorModal(
+        "Data Loading Error",
+        "Failed to load patient data. Please check your internet connection and try again.",
+        () => {
+          setErrorModal({ isVisible: false, title: "", message: "", onRetry: null });
+          // Retry
+          fetchCampPatients();
+        }
+      );
+    }
+  };
+
+  fetchCampPatients();
+}, []);
 
   // Update counts whenever patients array changes
   useEffect(() => {
@@ -549,6 +559,12 @@ const handleSaveAfterAssessment = async () => {
   setSaveStatus('saving');
 
   try {
+    const selectedCamp = localStorage.getItem("selectedCamp");
+    if (!selectedCamp) {
+      alert("Camp not selected. Please login again.");
+      return;
+    }
+
     // Prepare the data to save including risk assessment
     const medicalData = {
       patientId: selectedPatient.id,
@@ -628,78 +644,59 @@ const handleSaveAfterAssessment = async () => {
       updatedBy: 'middleman',
       status: 'Complete'
     };
+    const globalAssessmentRef = doc(db, "medical_assessments", selectedPatient.id);
+await setDoc(globalAssessmentRef, {
+  ...medicalData,
+  createdAt: serverTimestamp()
+});
+    // 🔄 Save assessment inside camp-specific subcollection
+    const campAssessmentRef = doc(db, `camps_metadata/${selectedCamp}/medical_assessment`, selectedPatient.id);
+    await setDoc(campAssessmentRef, {
+      ...medicalData,
+      createdAt: serverTimestamp()
+    });
 
-    // CHANGE: Always check for existing assessment before saving
-    if (!existingAssessmentId) {
-      // Double-check for existing assessment
-      const q = query(
-        collection(db, "medical_assessments"),
-        where("patientId", "==", selectedPatient.id),
-        orderBy("updatedAt", "desc"),
-        limit(1)
-      );
-      const snapshot = await getDocs(q);
-      
-      if (!snapshot.empty) {
-        setExistingAssessmentId(snapshot.docs[0].id);
-      }
-    }
-
-    if (existingAssessmentId) {
-      // Update existing assessment
-      const assessmentRef = doc(db, "medical_assessments", existingAssessmentId);
-      await updateDoc(assessmentRef, medicalData);
-      console.log('Updated existing assessment:', existingAssessmentId);
-    } else {
-      // Create new assessment only if absolutely no existing record
-      const docRef = await addDoc(collection(db, "medical_assessments"), {
-        ...medicalData,
-        createdAt: serverTimestamp()
-      });
-      setExistingAssessmentId(docRef.id);
-      console.log('Created new assessment:', docRef.id);
-    }
-
-    // Update patient status to Complete
+    // ✅ Update global patient status to 'Complete'
     const patientRef = doc(db, "patients", selectedPatient.id);
     await updateDoc(patientRef, {
       status: 'Complete',
       lastUpdated: new Date().toISOString().split('T')[0],
       updatedAt: serverTimestamp()
     });
-
+const campPatientRef = doc(db, `camps_metadata/${selectedCamp}/patients`, selectedPatient.id);
+await updateDoc(campPatientRef, {
+  status: 'Complete',
+  lastUpdated: new Date().toISOString().split('T')[0],
+  updatedAt: serverTimestamp()
+});
     setSaveStatus('success');
 
     // Update local state
-    const updatedPatients = patients.map(patient => 
-      patient.id === selectedPatient.id 
-        ? { ...patient, status: 'Complete', lastUpdated: new Date().toISOString().split('T')[0] }
-        : patient
-    );
-    setPatients(updatedPatients);
+    const updatedPatients = patients.map(patient =>
+  patient.id === selectedPatient.id
+    ? { ...patient, status: 'Complete', lastUpdated: new Date().toISOString().split('T')[0] }
+    : patient
+);
+setPatients(updatedPatients);
 
-    // Immediately update the selected patient as well
-    setSelectedPatient(prev => ({
-      ...prev,
-      status: 'Complete',
-      lastUpdated: new Date().toISOString().split('T')[0]
-    }));
-
-    // Close the modal after successful save
+setSelectedPatient(prev => ({
+  ...prev,
+  status: 'Complete',
+  lastUpdated: new Date().toISOString().split('T')[0]
+}));
     setTimeout(() => {
       setResults({ ...results, modalVisible: false });
       setSaveStatus('');
     }, 2000);
 
   } catch (error) {
-    console.error("Error saving data:", error);
+    console.error("Error saving assessment:", error);
     setSaveStatus('error');
     showErrorModal(
       "Save Error",
-      "Failed to save the medical assessment. Please check your internet connection and try again.",
+      "Failed to save the medical assessment. Please try again.",
       () => {
         setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
-        // Retry the save
         handleSaveAfterAssessment();
       }
     );
@@ -708,94 +705,97 @@ const handleSaveAfterAssessment = async () => {
 };
 
   const handleDeleteAssessment = async (patient) => {
-    try {
-      // First, check if there's an existing assessment
-      const q = query(
-        collection(db, "medical_assessments"),
-        where("patientId", "==", patient.id),
-        orderBy("updatedAt", "desc"),
-        limit(1)
-      );
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
-        alert("No medical assessment found for this patient.");
-        return;
-      }
-
-      const assessmentDoc = snapshot.docs[0];
-
-      // Show confirmation modal
-      setDeleteConfirmation({
-        isVisible: true,
-        patientId: patient.id,
-        patientName: patient.name,
-        assessmentId: assessmentDoc.id
-      });
-
-    } catch (error) {
-      console.error("Error checking for assessment:", error);
-      alert("Error checking assessment data. Please try again.");
+  try {
+    const selectedCamp = localStorage.getItem("selectedCamp");
+    if (!selectedCamp) {
+      alert("Camp not selected. Please login again.");
+      return;
     }
-  };
 
-  const confirmDeleteAssessment = async () => {
-    try {
-      // Delete the medical assessment document
-      await deleteDoc(doc(db, "medical_assessments", deleteConfirmation.assessmentId));
-      
-      // Update patient status back to 'Pending' (since assessment is deleted)
-      const patientRef = doc(db, "patients", deleteConfirmation.patientId);
-      await updateDoc(patientRef, {
+    // Access the camp-specific subcollection
+    const assessmentRef = doc(db, `camps_metadata/${selectedCamp}/medical_assessment/${patient.id}`);
+    const assessmentSnap = await getDoc(assessmentRef);
+
+    if (!assessmentSnap.exists()) {
+      alert("No medical assessment found for this patient in selected camp.");
+      return;
+    }
+
+    // Show confirmation modal
+    setDeleteConfirmation({
+      isVisible: true,
+      patientId: patient.id,
+      patientName: patient.name,
+      assessmentId: assessmentRef.id
+    });
+
+  } catch (error) {
+    console.error("Error checking for assessment:", error);
+    alert("Error checking assessment data. Please try again.");
+  }
+};
+
+const confirmDeleteAssessment = async () => {
+  try {
+    const selectedCamp = localStorage.getItem("selectedCamp");
+    if (!selectedCamp) {
+      alert("Camp not selected. Please login again.");
+      return;
+    }
+
+    // Delete from camp-specific subcollection
+    await deleteDoc(doc(db, `camps_metadata/${selectedCamp}/medical_assessment`, deleteConfirmation.patientId));
+
+    // Update global patient status back to 'Pending'
+    const patientRef = doc(db, "patients", deleteConfirmation.patientId);
+    await updateDoc(patientRef, {
+      status: 'Pending',
+      lastUpdated: new Date().toISOString().split('T')[0],
+      updatedAt: serverTimestamp()
+    });
+
+    // Update local state
+    const updatedPatients = patients.map(patient =>
+      patient.id === deleteConfirmation.patientId
+        ? { ...patient, status: 'Pending', lastUpdated: new Date().toISOString().split('T')[0] }
+        : patient
+    );
+    setPatients(updatedPatients);
+
+    // If the deleted patient is the selected one, reset state
+    if (selectedPatient?.id === deleteConfirmation.patientId) {
+      setSelectedPatient(prev => ({
+        ...prev,
         status: 'Pending',
-        lastUpdated: new Date().toISOString().split('T')[0],
-        updatedAt: serverTimestamp()
-      });
-    
-      // Update local state
-      const updatedPatients = patients.map(patient => 
-        patient.id === deleteConfirmation.patientId 
-          ? { ...patient, status: 'Pending', lastUpdated: new Date().toISOString().split('T')[0] }
-          : patient
-      );
-      setPatients(updatedPatients);
-    
-      // Update selected patient if it's the one being deleted
-      if (selectedPatient?.id === deleteConfirmation.patientId) {
-        setSelectedPatient(prev => ({
-          ...prev,
-          status: 'Pending',
-          lastUpdated: new Date().toISOString().split('T')[0]
-        }));
-        
-        // Reset form and clear existing assessment ID
-        resetForm();
-        setExistingAssessmentId(null);
-      }
-    
-      // Close confirmation modal
-      setDeleteConfirmation({
-        isVisible: false,
-        patientId: null,
-        patientName: '',
-        assessmentId: null
-      });
-    
-      alert("Medical assessment deleted successfully!");
-    
-    } catch (error) {
-      console.error("Error deleting assessment:", error);
-      showErrorModal(
-        "Delete Error",
-        "Failed to delete the medical assessment. Please try again.",
-        () => {
-          setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
-          // Retry the delete
-          confirmDeleteAssessment();
-        }
-      );
+        lastUpdated: new Date().toISOString().split('T')[0]
+      }));
+
+      resetForm();
+      setExistingAssessmentId(null);
     }
-  };
+
+    setDeleteConfirmation({
+      isVisible: false,
+      patientId: null,
+      patientName: '',
+      assessmentId: null
+    });
+
+    alert("Medical assessment deleted successfully!");
+
+  } catch (error) {
+    console.error("Error deleting assessment:", error);
+    showErrorModal(
+      "Delete Error",
+      "Failed to delete the medical assessment. Please try again.",
+      () => {
+        setErrorModal({ isVisible: false, title: '', message: '', onRetry: null });
+        confirmDeleteAssessment(); // Retry
+      }
+    );
+  }
+};
+
 
   const getStatusColor = (status) => {
     switch (status) {

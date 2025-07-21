@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs,where, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../firebase/firebase'; // ✅ Correct import path
 import { db } from '../firebase/firebase';
@@ -142,35 +142,53 @@ const DoctorDashboard = () => {
   };
 
   const fetchPatientsWithAssessments = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const patientsQuery = query(collection(db, 'patients'), orderBy('createdAt', 'desc'));
-      const patientsSnapshot = await getDocs(patientsQuery);
-      const patientsData = patientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    setLoading(true);
+    setError(null);
 
-      const assessmentsQuery = query(collection(db, 'medical_assessments'), orderBy('updatedAt', 'desc'));
-      const assessmentsSnapshot = await getDocs(assessmentsQuery);
-      const assessmentsData = assessmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      const patientsWithAssessments = patientsData.map(patient => {
-        const assessment = assessmentsData.find(assess => assess.tokenNumber === patient.tokenNumber);
-        return {
-          ...patient,
-          assessment: assessment || null
-        };
-      }).filter(patient => patient.assessment !== null);
-
-      setPatients(patientsWithAssessments);
-    } catch (error) {
-        console.error('Error fetching patients and assessments:', error);
-        setError('Failed to fetch patient data. Please try again.');
-        showModal('error', 'Data Loading Error', 'Failed to fetch patient data. Please try again.');
-      }finally {
-      setLoading(false);
+    // Get selected camp from localStorage
+    const selectedCamp = localStorage.getItem("selectedCamp");
+    if (!selectedCamp) {
+      setError("Camp not selected.");
+      showModal("Error", "Please select a camp before viewing patients.", "error");
+      return;
     }
-  };
+
+    // Fetch only patients from selected camp
+    const patientsQuery = query(
+      collection(db, 'patients'),
+      where("camp", "==", selectedCamp),
+      orderBy("createdAt", "desc")
+    );
+    const patientsSnapshot = await getDocs(patientsQuery);
+    const patientsData = patientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Fetch all assessments
+    const assessmentsQuery = query(
+      collection(db, 'medical_assessments'),
+      orderBy('updatedAt', 'desc')
+    );
+    const assessmentsSnapshot = await getDocs(assessmentsQuery);
+    const assessmentsData = assessmentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Merge patients with their assessments
+    const patientsWithAssessments = patientsData.map(patient => {
+      const assessment = assessmentsData.find(assess => assess.tokenNumber === patient.tokenNumber);
+      return {
+        ...patient,
+        assessment: assessment || null
+      };
+    }).filter(patient => patient.assessment !== null);
+
+    setPatients(patientsWithAssessments);
+  } catch (error) {
+    console.error('Error fetching patients and assessments:', error);
+    setError('Failed to fetch patient data. Please try again.');
+    showModal('error', 'Data Loading Error', 'Failed to fetch patient data. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getRiskClass = (riskLevel) => {
     switch (riskLevel?.toLowerCase()) {
