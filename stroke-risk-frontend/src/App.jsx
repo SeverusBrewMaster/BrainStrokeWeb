@@ -10,6 +10,7 @@ import NurseDashboard from "./pages/NurseDashboard";
 import MiddlemanDashboard from './pages/MiddlemanDashboard';
 import AssessmentsPage from './pages/AssessmentsPage';
 import DoctorDashboard from './pages/DoctorDashboard';
+import Report from './pages/Report';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/about" element={<About />} />
           <Route path="/risk" element={<Risk />} />
+          <Route path="/report" element={<Report />} />
           <Route path="/user" element={<User />} />
           <Route path="/symptom" element={<Symptom />} />
           <Route path="/assessments" element={<AssessmentsPage />} />
