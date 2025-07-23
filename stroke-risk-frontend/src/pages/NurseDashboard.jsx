@@ -284,27 +284,40 @@ const handleSubmit = async (e) => {
       setIsEditing(false);
       setEditingPatientId(null);
     } else {
-      const token = `PAT${Date.now()}`;
-      const defaultStatus = "Pending";
+      const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
 
-      const patientDataWithMeta = {
-        ...patientData,
-        tokenNumber: token,
-        status: defaultStatus,
-        createdAt: Timestamp.now(),
-        camp: selectedCamp
-      };
+  const snapshot = await getDocs(collection(db, `camps_metadata/${selectedCamp}/patients`));
+  const todayPatients = snapshot.docs.filter(doc => {
+    const createdAt = doc.data().createdAt?.toDate?.();
+    return createdAt &&
+           createdAt.getFullYear() === now.getFullYear() &&
+           createdAt.getMonth() === now.getMonth() &&
+           createdAt.getDate() === now.getDate();
+  });
 
-      // Create new doc in global collection
-      const globalDocRef = doc(collection(db, "patients"));
-      await setDoc(globalDocRef, patientDataWithMeta);
+  const serial = String(todayPatients.length + 1).padStart(2, '0');
+  const token = `PAT${year}${month}${day}${serial}`;
+  const defaultStatus = "Pending";
 
-      // Add to camp-specific subcollection with same ID
-      const campDocRef = doc(db, `camps_metadata/${selectedCamp}/patients`, globalDocRef.id);
-      await setDoc(campDocRef, patientDataWithMeta);
+  const patientDataWithMeta = {
+    ...patientData,
+    tokenNumber: token,
+    status: defaultStatus,
+    createdAt: Timestamp.now(),
+    camp: selectedCamp
+  };
 
-      showModal('Success', 'Patient added successfully!', 'success');
-    }
+  const globalDocRef = doc(collection(db, "patients"));
+  await setDoc(globalDocRef, patientDataWithMeta);
+
+  const campDocRef = doc(db, `camps_metadata/${selectedCamp}/patients`, globalDocRef.id);
+  await setDoc(campDocRef, patientDataWithMeta);
+
+  showModal('Success', 'Patient added successfully!', 'success');
+}
 
     // Reset form
     setPatientData({

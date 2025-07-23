@@ -337,59 +337,78 @@ const Login = () => {
 
       {/* Camp Selection Modal */}
       {showCampModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center space-y-4">
-            <h2 className="text-xl font-bold mb-4">Select or Create Camp Location</h2>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center space-y-4">
+      <h2 className="text-xl font-bold mb-4">Select or Create Camp Location</h2>
 
-            {userRole === "doctor" ? (
-              <>
-                <select
-                  value={campLocation}
-                  onChange={(e) => setCampLocation(e.target.value)}
-                  className="w-full p-3 border rounded-md mb-2"
-                >
-                  <option value="">-- Select existing camp --</option>
-                  {availableCamps.map((camp) => (
-                    <option key={camp} value={camp}>
-                      {camp.charAt(0).toUpperCase() + camp.slice(1)}
-                    </option>
-                  ))}
-                </select>
+      {userRole === "doctor" ? (
+        <>
+          <select
+            value={campLocation}
+            onChange={(e) => setCampLocation(e.target.value)}
+            className="w-full p-3 border rounded-md mb-2"
+          >
+            <option value="" hidden disabled>
+              Select existing camp
+            </option>
+            {availableCamps.map((camp) => (
+              <option key={camp} value={camp}>
+                {camp.charAt(0).toUpperCase() + camp.slice(1)}
+              </option>
+            ))}
+          </select>
 
-                <div className="text-gray-500 text-sm mb-2">or enter a new camp location</div>
-
-                <input
-                  type="text"
-                  placeholder="Enter new location (e.g., Vashi)"
-                  value={campLocation}
-                  onChange={(e) => setCampLocation(e.target.value)}
-                  className="w-full p-3 border rounded-md"
-                />
-              </>
-            ) : (
-              <select
-                value={campLocation}
-                onChange={(e) => setCampLocation(e.target.value)}
-                className="w-full p-3 border rounded-md"
-              >
-                <option value=""> Select a location </option>
-                {availableCamps.map((camp) => (
-                  <option key={camp} value={camp}>
-                    {camp.charAt(0).toUpperCase() + camp.slice(1)}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <button
-              onClick={handleCampSubmit}
-              className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 mt-2"
-            >
-              Continue
-            </button>
+          <div className="text-gray-500 text-sm mb-2">
+            or enter a new camp location
           </div>
-        </div>
+
+          <input
+            type="text"
+            placeholder="Enter new location (e.g., Vashi)"
+            value={campLocation}
+            onChange={(e) => setCampLocation(e.target.value)}
+            className={`w-full p-3 border rounded-md ${
+              availableCamps.includes(campLocation)
+                ? "bg-gray-200 cursor-not-allowed"
+                : ""
+            }`}
+            disabled={availableCamps.includes(campLocation)}
+          />
+        </>
+      ) : (
+        <select
+          value={campLocation}
+          onChange={(e) => setCampLocation(e.target.value)}
+          className="w-full p-3 border rounded-md"
+        >
+          <option value="" disabled hidden>
+            Select a location
+          </option>
+          {availableCamps.map((camp) => (
+            <option key={camp} value={camp}>
+              {camp.charAt(0).toUpperCase() + camp.slice(1)}
+            </option>
+          ))}
+        </select>
       )}
+
+      <div className="flex justify-between mt-4 space-x-4">
+        <button
+          onClick={handleCampSubmit}
+          className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 w-full"
+        >
+          Continue
+        </button>
+        <button
+          onClick={() => setShowCampModal(false)}
+          className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 w-full transition-colors duration-200"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Login Page */}
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
