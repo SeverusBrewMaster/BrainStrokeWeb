@@ -304,7 +304,7 @@ const Login = () => {
 
     const camp = campLocation.trim().toLowerCase();
 
-    if (userRole === "doctor") {
+    if (userRole === "nurse") {
       // ✅ Nurse can create new camp if not exists
       const campRef = doc(db, "camps_metadata", camp);
       await setDoc(campRef, { createdAt: new Date() }, { merge: true });
