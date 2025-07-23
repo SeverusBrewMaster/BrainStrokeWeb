@@ -304,7 +304,7 @@ const Login = () => {
 
     const camp = campLocation.trim().toLowerCase();
 
-    if (userRole === "nurse") {
+    if (userRole === "doctor") {
       // ✅ Nurse can create new camp if not exists
       const campRef = doc(db, "camps_metadata", camp);
       await setDoc(campRef, { createdAt: new Date() }, { merge: true });
@@ -341,7 +341,7 @@ const Login = () => {
           <div className="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center space-y-4">
             <h2 className="text-xl font-bold mb-4">Select or Create Camp Location</h2>
 
-            {userRole === "nurse" ? (
+            {userRole === "doctor" ? (
               <>
                 <select
                   value={campLocation}
