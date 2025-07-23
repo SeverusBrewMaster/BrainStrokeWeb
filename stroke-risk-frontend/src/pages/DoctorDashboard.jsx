@@ -1036,7 +1036,7 @@ const getCategorizedRiskFactors = (patient, assessment) => {
       const patientToken = patient.tokenNumber;
 
       // Your app's base URL - update this to your actual domain
-      const baseUrl = 'https://yourapp.com'; // Replace with your actual domain
+      const baseUrl = 'https://brain-stroke-e42b1.web.app'; // Replace with your actual domain
       const reportUrl = `${baseUrl}/report?token=${patientToken}`;
 
       // Clean phone number
