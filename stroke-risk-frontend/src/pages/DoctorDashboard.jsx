@@ -203,7 +203,7 @@ const DoctorDashboard = () => {
 
   const isHighOrModerateRisk = (patient) => {
     const score = patient?.assessment?.riskAssessment?.riskScore;
-    return score >= 5;
+    return score > 5;
   };
 
   const handlePatientSelect = (patient) => {

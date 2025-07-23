@@ -644,7 +644,7 @@ const handleSubmit = async (e) => {
                     name="gender"
                     value={patientData.gender}
                     onChange={handleChange}
-                    required
+                     
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                   >
                     <option value="" disabled hidden>Select Gender</option>
@@ -666,7 +666,7 @@ const handleSubmit = async (e) => {
                         placeholder="Enter full name"
                         value={patientData.name}
                         onChange={handleChange}
-                        required
+                         
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
@@ -678,7 +678,7 @@ const handleSubmit = async (e) => {
                         placeholder="Enter age"
                         value={patientData.age}
                         onChange={handleChange}
-                        required
+                         
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
@@ -693,7 +693,7 @@ const handleSubmit = async (e) => {
                         placeholder="Enter locality"
                         value={patientData.locality}
                         onChange={handleChange}
-                        required
+                         
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
@@ -706,7 +706,7 @@ const handleSubmit = async (e) => {
                         pattern="[0-9]{10}"
                         value={patientData.phone}
                         onChange={handleChange}
-                        required
+                         
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
                     </div>
@@ -731,7 +731,7 @@ const handleSubmit = async (e) => {
                         name="aqi"
                         placeholder="Enter AQI value"
                         value={patientData.aqi}
-                        required
+                         
                         onChange={handleChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       />
@@ -756,7 +756,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter weight in kg"
         value={patientData.weight}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -768,7 +768,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter height in cm"
         value={patientData.height}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -794,7 +794,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter waist in cm"
         value={patientData.waist}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -809,7 +809,6 @@ const handleSubmit = async (e) => {
         placeholder="Enter HDL value"
         value={patientData.hdl}
         onChange={handleChange}
-        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -821,7 +820,6 @@ const handleSubmit = async (e) => {
         placeholder="Enter LDL value"
         value={patientData.ldl}
         onChange={handleChange}
-        required
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -836,7 +834,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter cholesterol value"
         value={patientData.cholesterol}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -848,7 +846,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter TG value"
         value={patientData.tg}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -860,7 +858,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter homocysteine value"
         value={patientData.homocysteine}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -872,7 +870,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter Lipoprotein A value"
         value={patientData.lipoprotein}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -895,7 +893,7 @@ const handleSubmit = async (e) => {
         placeholder="e.g., 120/80"
         value={patientData.bloodPressure}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -907,7 +905,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter hemoglobin level"
         value={patientData.hemoglobin}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -922,7 +920,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter WBC count"
         value={patientData.wbc}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -934,7 +932,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter platelet count"
         value={patientData.platelets}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -949,7 +947,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter hematocrit value"
         value={patientData.hematocrit}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -961,7 +959,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter CRP value"
         value={patientData.crp}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -976,7 +974,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter RBS value"
         value={patientData.rbs}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
@@ -988,7 +986,7 @@ const handleSubmit = async (e) => {
         placeholder="Enter HbA1c value"
         value={patientData.hba1c}
         onChange={handleChange}
-        required
+         
         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
       />
     </div>
