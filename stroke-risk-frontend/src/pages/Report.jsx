@@ -606,7 +606,7 @@ const extractRiskFactors = (patient, assessment) => {
           <div style="margin-bottom: 20px; page-break-inside: avoid;">
             <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Doctor's Recommendation</h3>
             <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
-              <div style="width: 100%;">${note}</div>
+              <div style="width: 100%;">${assessment.doctorRecommendation}</div>
             </div>
           </div>
               

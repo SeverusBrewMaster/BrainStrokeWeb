@@ -320,7 +320,7 @@ const Login = () => {
         navigate("/doctor-dashboard");
         break;
       case "middleman":
-        navigate("/middleman-dashboard");
+        navigate("/medical-dashboard");
         break;
       default:
         setError("Invalid role.");
@@ -463,8 +463,8 @@ const Login = () => {
                       className="w-full px-4 py-3 border-2 rounded-lg"
                     >
                       <option value="nurse">Nurse</option>
-                      <option value="doctor">Doctor</option>
-                      <option value="middleman">Middleman</option>
+                      <option value="doctor">Consultant</option>
+                      <option value="middleman">Medical Officer</option>
                     </select>
                   </div>
 

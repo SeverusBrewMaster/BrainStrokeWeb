@@ -299,7 +299,7 @@ const handleSubmit = async (e) => {
   });
 
   const serial = String(todayPatients.length + 1).padStart(2, '0');
-  const token = `PAT${year}${month}${day}${serial}`;
+  const token = `BC${year}${month}${day}${serial}`;
   const defaultStatus = "Pending";
 
   const patientDataWithMeta = {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs,where, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, getDocs, setDoc, collection, query, where, orderBy, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '../firebase/firebase'; // ✅ Correct import path
 import { db } from '../firebase/firebase';
@@ -7,7 +7,7 @@ import {
   FaUserCircle, FaHeartbeat, FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, 
   FaClipboardList, FaExclamationTriangle, FaWeight, FaRulerHorizontal, 
   FaFlask, FaFilePdf, FaWhatsapp, FaTimes, FaCheckCircle, FaInfoCircle, 
-  FaExclamationCircle, FaSearch // ADD THIS
+  FaExclamationCircle, FaSearch, FaSave
 } from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 import logo from '../components/logo1.png';
@@ -115,6 +115,8 @@ const DoctorDashboard = () => {
   const [generatedPDFBlob, setGeneratedPDFBlob] = useState(null);
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
 
   // ADD THESE NEW STATE VARIABLES FOR MODAL
   const [modalConfig, setModalConfig] = useState({
@@ -191,6 +193,70 @@ const DoctorDashboard = () => {
   }
 };
 
+  // Function to save doctor's recommendation
+const saveDoctorRecommendation = async (patientId, assessmentId) => {
+  try {
+    setIsSaving(true);
+    setError(null);
+
+    if (!doctorNote.trim()) {
+      showModal("Error", "Please enter a recommendation before saving.", "error");
+      return;
+    }
+
+    // Get the selected camp from localStorage
+    const selectedCamp = localStorage.getItem("selectedCamp");
+    if (!selectedCamp) {
+      showModal("Error", "No camp selected. Please select a camp first.", "error");
+      return;
+    }
+
+    console.log('Attempting to save recommendation for:', { patientId, assessmentId, selectedCamp });
+
+    // Reference to the medical assessment document within the specific camp's subcollection
+    const assessmentRef = doc(db, `camps_metadata/${selectedCamp}/medical_assessment`, assessmentId);
+    
+    // Check if document exists first
+    const docSnapshot = await getDoc(assessmentRef);
+    
+    const recommendationData = {
+      doctorRecommendation: doctorNote.trim(),
+      recommendationUpdatedAt: serverTimestamp(),
+      recommendationUpdatedBy: "doctor", // You can replace this with actual doctor's name/ID
+    };
+
+    if (docSnapshot.exists()) {
+      console.log('Document exists, updating...');
+      // Document exists, update it
+      await updateDoc(assessmentRef, recommendationData);
+    } else {
+      console.log('Document does not exist, creating new one...');
+      // Document doesn't exist, create it with basic required fields
+      await setDoc(assessmentRef, {
+        ...recommendationData,
+        patientId: patientId,
+        assessmentId: assessmentId,
+        createdAt: serverTimestamp(),
+      });
+    }
+
+    console.log('Recommendation saved successfully');
+    
+  } catch (error) {
+    console.error('Error saving doctor recommendation:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      patientId,
+      assessmentId,
+      selectedCamp: localStorage.getItem("selectedCamp")
+    });
+    setError('Failed to save recommendation. Please try again.');
+    showModal('Error', 'Failed to save recommendation. Please try again.', 'error');
+  } finally {
+    setIsSaving(false);
+  }
+};
   const getRiskClass = (riskLevel) => {
     switch (riskLevel?.toLowerCase()) {
       case 'low': return 'risk-badge risk-low';
@@ -817,7 +883,7 @@ const getCategorizedRiskFactors = (patient, assessment) => {
       <div style="margin-bottom: 20px; page-break-inside: avoid;">
         <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Doctor's Recommendation</h3>
         <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
-          <div style="width: 100%;">${note}</div>
+          <div style="width: 100%;">${assessment.doctorRecommendation}</div>
         </div>
       </div>
           
@@ -1077,6 +1143,15 @@ const getCategorizedRiskFactors = (patient, assessment) => {
   useEffect(() => {
     fetchPatientsWithAssessments();
   }, []);
+
+  // Add this useEffect to load existing recommendation when a patient is selected
+  useEffect(() => {
+    if (selectedPatient && selectedPatient.assessment && selectedPatient.assessment.doctorRecommendation) {
+      setDoctorNote(selectedPatient.assessment.doctorRecommendation);
+    } else {
+      setDoctorNote('');
+    }
+  }, [selectedPatient]);
 
   const filteredPatients = patients
   .filter(isHighOrModerateRisk)
@@ -1410,80 +1485,80 @@ const getCategorizedRiskFactors = (patient, assessment) => {
 
                 {/* Risk Factors */}
                 {/* Categorized Contributing Risk Factors */}
-<div className="space-y-6">
-  {/* Clinical Risk Factors */}
-  <div className="bg-red-100 rounded-xl shadow-lg p-6 border border-red-300">
-    <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center">
-      <FaExclamationTriangle className="text-red-500 mr-3" />
-      Clinical Risk Factors
-    </h3>
-    <div className="space-y-2">
-      {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Clinical?.map((factor, index) => (
-        <div key={index} className="flex items-center space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 5l6 10H4l6-10z" />
-          </svg>
-          <span className="text-gray-800">{factor}</span>
-        </div>
-      ))}
-    </div>
-  </div>
-
-  {/* Lifestyle Risk Factors */}
-  <div
-  className="rounded-xl shadow-lg p-6 border"
-  style={{ backgroundColor: "#FFEDD5", borderColor: "#FDBA74" }} // orange-100 bg, orange-300 border
->
-  <h3
-    className="text-xl font-bold mb-4 flex items-center"
-    style={{ color: "#C2410C" }} // orange-700
-  >
-    <FaExclamationTriangle style={{ color: "#F97316" }} className="mr-3" /> {/* orange-500 */}
-    Lifestyle Risk Factors
-  </h3>
-  <div className="space-y-2">
-    {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Lifestyle?.map((factor, index) => (
-      <div
-        key={index}
-        className="flex items-center space-x-3 p-3 rounded-lg border"
-        style={{
-          backgroundColor: "#FFFBEB", // orange-50
-          borderColor: "#FED7AA",     // orange-200
-        }}
-      >
-        <svg
-          className="w-4 h-4"
-          style={{ color: "#EA580C" }} // orange-600
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M10 5l6 10H4l6-10z" />
-        </svg>
-        <span className="text-gray-800">{factor}</span>
-      </div>
-    ))}
-  </div>
-</div>
-
-
-  {/* Background Risk Factors */}
-  <div className="bg-yellow-100 rounded-xl shadow-lg p-6 border border-yellow-300">
-    <h3 className="text-xl font-bold text-yellow-700 mb-4 flex items-center">
-      <FaExclamationTriangle className="text-yellow-500 mr-3" />
-      Background / Environmental Risk Factors
-    </h3>
-    <div className="space-y-2">
-      {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Background?.map((factor, index) => (
-        <div key={index} className="flex items-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 5l6 10H4l6-10z" />
-          </svg>
-          <span className="text-gray-800">{factor}</span>
-        </div>
-      ))}
-    </div>
-  </div>
-</div>
+                <div className="space-y-6">
+                  {/* Clinical Risk Factors */}
+                  <div className="bg-red-100 rounded-xl shadow-lg p-6 border border-red-300">
+                    <h3 className="text-xl font-bold text-red-700 mb-4 flex items-center">
+                      <FaExclamationTriangle className="text-red-500 mr-3" />
+                      Clinical Risk Factors
+                    </h3>
+                    <div className="space-y-2">
+                      {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Clinical?.map((factor, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 5l6 10H4l6-10z" />
+                          </svg>
+                          <span className="text-gray-800">{factor}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                    
+                  {/* Lifestyle Risk Factors */}
+                  <div
+                  className="rounded-xl shadow-lg p-6 border"
+                  style={{ backgroundColor: "#FFEDD5", borderColor: "#FDBA74" }} // orange-100 bg, orange-300 border
+                >
+                  <h3
+                    className="text-xl font-bold mb-4 flex items-center"
+                    style={{ color: "#C2410C" }} // orange-700
+                  >
+                    <FaExclamationTriangle style={{ color: "#F97316" }} className="mr-3" /> {/* orange-500 */}
+                    Lifestyle Risk Factors
+                  </h3>
+                  <div className="space-y-2">
+                    {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Lifestyle?.map((factor, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center space-x-3 p-3 rounded-lg border"
+                        style={{
+                          backgroundColor: "#FFFBEB", // orange-50
+                          borderColor: "#FED7AA",     // orange-200
+                        }}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          style={{ color: "#EA580C" }} // orange-600
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M10 5l6 10H4l6-10z" />
+                        </svg>
+                        <span className="text-gray-800">{factor}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                  
+                  
+                  {/* Background Risk Factors */}
+                  <div className="bg-yellow-100 rounded-xl shadow-lg p-6 border border-yellow-300">
+                    <h3 className="text-xl font-bold text-yellow-700 mb-4 flex items-center">
+                      <FaExclamationTriangle className="text-yellow-500 mr-3" />
+                      Background / Environmental Risk Factors
+                    </h3>
+                    <div className="space-y-2">
+                      {getCategorizedRiskFactors(selectedPatient, selectedAssessment).Background?.map((factor, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 5l6 10H4l6-10z" />
+                          </svg>
+                          <span className="text-gray-800">{factor}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
               </div>
 
@@ -1500,46 +1575,72 @@ const getCategorizedRiskFactors = (patient, assessment) => {
                   className="w-full mt-3 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
                   value={doctorNote}
                   onChange={(e) => setDoctorNote(e.target.value)}
+                  disabled={isSaving}
                 />
+
+                {/* Save Button */}
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={() => saveDoctorRecommendation(selectedPatient.id, selectedPatient.assessment.id)}
+                    disabled={isSaving || !doctorNote.trim()}
+                    className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center ${
+                      isSaving || !doctorNote.trim()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500'
+                    }`}
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <FaSave className="mr-2" />
+                        Save Recommendation
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Action Buttons */}
-<div className="flex flex-col sm:flex-row gap-4">
-  <button 
-    className={`flex-1 ${isGeneratingPDF ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'} text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-3`}
-    onClick={generatePDF}
-    disabled={isGeneratingPDF}
-  >
-    {isGeneratingPDF ? (
-      <>
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-        <span>Generating PDF...</span>
-      </>
-    ) : (
-      <>
-        <FaFilePdf className="text-xl" />
-        <span>Generate PDF Report</span>
-      </>
-    )}
-  </button>
-  <button
-    className={`flex-1 ${isSendingWhatsApp ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'} text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-3`}
-    onClick={sendToWhatsApp}
-    disabled={isSendingWhatsApp}
-  >
-    {isSendingWhatsApp ? (
-      <>
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-        <span>Preparing...</span>
-      </>
-    ) : (
-      <>
-        <FaWhatsapp className="text-xl" />
-        <span>Send to Patient</span>
-      </>
-    )}
-  </button>
-</div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  className={`flex-1 ${isGeneratingPDF ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'} text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-3`}
+                  onClick={generatePDF}
+                  disabled={isGeneratingPDF}
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Generating PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaFilePdf className="text-xl" />
+                      <span>Generate PDF Report</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  className={`flex-1 ${isSendingWhatsApp ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'} text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 flex items-center justify-center space-x-3`}
+                  onClick={sendToWhatsApp}
+                  disabled={isSendingWhatsApp}
+                >
+                  {isSendingWhatsApp ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Preparing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaWhatsapp className="text-xl" />
+                      <span>Send to Patient</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center m-16">
