@@ -269,7 +269,7 @@ const saveDoctorRecommendation = async (patientId, assessmentId) => {
 
   const isHighOrModerateRisk = (patient) => {
     const score = patient?.assessment?.riskAssessment?.riskScore;
-    return score > 5;
+    return score > 0;
   };
 
   const handlePatientSelect = (patient) => {
