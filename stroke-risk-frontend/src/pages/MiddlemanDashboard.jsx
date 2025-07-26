@@ -7,7 +7,8 @@ import {
   getDocs,
   setDoc, 
   addDoc, 
-  updateDoc, 
+  updateDoc,
+  onSnapshot, 
   doc, 
   query, 
   orderBy, 
@@ -36,19 +37,39 @@ useEffect(() => {
         collection(db, `camps_metadata/${selectedCamp}/patients`),
         orderBy("createdAt", "desc")
       );
-      const snapshot = await getDocs(q);
 
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        status: doc.data().status || "Pending",
-        lastUpdated: doc.data().lastUpdated || new Date().toISOString().split("T")[0],
-      }));
+      // Set up real-time listener
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            status: doc.data().status || "Pending",
+            lastUpdated: doc.data().lastUpdated || new Date().toISOString().split("T")[0],
+          }));
 
-      setPatients(data);
-      calculatePeopleCount(data); // ✅ your function remains
+          setPatients(data);
+          calculatePeopleCount(data); // ✅ your function remains
+        },
+        (error) => {
+          console.error("Error fetching camp patients:", error);
+          showErrorModal(
+            "Data Loading Error",
+            "Failed to load patient data. Please check your internet connection and try again.",
+            () => {
+              setErrorModal({ isVisible: false, title: "", message: "", onRetry: null });
+              // Retry
+              fetchCampPatients();
+            }
+          );
+        }
+      );
+
+      // Return unsubscribe function for cleanup
+      return unsubscribe;
     } catch (error) {
-      console.error("Error fetching camp patients:", error);
+      console.error("Error setting up patient listener:", error);
       showErrorModal(
         "Data Loading Error",
         "Failed to load patient data. Please check your internet connection and try again.",
@@ -61,7 +82,17 @@ useEffect(() => {
     }
   };
 
-  fetchCampPatients();
+  let unsubscribe;
+  fetchCampPatients().then((unsub) => {
+    unsubscribe = unsub;
+  });
+
+  // Cleanup listener on component unmount
+  return () => {
+    if (unsubscribe) {
+      unsubscribe();
+    }
+  };
 }, []);
 
   // Update counts whenever patients array changes

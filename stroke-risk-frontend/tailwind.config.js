@@ -14,7 +14,7 @@ export default {
         warning: '#ffc107',
         info: '#0dcaf0',
         light: '#f8f9fa',
-        dark: '#212529'
+        dark: '#f8f9fa'
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -40,4 +40,5 @@ export default {
     },
   },
   plugins: [],
+  darkMode: false
 }

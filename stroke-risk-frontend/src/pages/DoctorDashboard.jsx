@@ -10,7 +10,7 @@ import {
   FaExclamationCircle, FaSearch, FaSave
 } from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
-import logo from '../components/logo1.png';
+import logo from '../components/logo.jpg';
 import qrcode from '../components/qr_code.png';
 import payqr from '../components/payqr.jpg';
 import axios from 'axios';
@@ -215,12 +215,14 @@ const saveDoctorRecommendation = async (patientId, assessmentId) => {
 
     // Reference to the medical assessment document within the specific camp's subcollection
     const assessmentRef = doc(db, `camps_metadata/${selectedCamp}/medical_assessment`, assessmentId);
+    const assessmentsRef = doc(db, `medical_assessments`, assessmentId);
     
     // Check if document exists first
     const docSnapshot = await getDoc(assessmentRef);
+    const docsSnapshot = await getDoc(assessmentsRef);
     
     const recommendationData = {
-      doctorRecommendation: doctorNote.trim(),
+      doctorRecommendation: doctorNote,
       recommendationUpdatedAt: serverTimestamp(),
       recommendationUpdatedBy: "doctor", // You can replace this with actual doctor's name/ID
     };
@@ -233,6 +235,20 @@ const saveDoctorRecommendation = async (patientId, assessmentId) => {
       console.log('Document does not exist, creating new one...');
       // Document doesn't exist, create it with basic required fields
       await setDoc(assessmentRef, {
+        ...recommendationData,
+        patientId: patientId,
+        assessmentId: assessmentId,
+        createdAt: serverTimestamp(),
+      });
+    }
+    if (docsSnapshot.exists()) {
+      console.log('Document exists, updating...');
+      // Document exists, update it
+      await updateDoc(assessmentsRef, recommendationData);
+    } else {
+      console.log('Document does not exist, creating new one...');
+      // Document doesn't exist, create it with basic required fields
+      await setDoc(assessmentsRef, {
         ...recommendationData,
         patientId: patientId,
         assessmentId: assessmentId,
@@ -256,6 +272,9 @@ const saveDoctorRecommendation = async (patientId, assessmentId) => {
   } finally {
     setIsSaving(false);
   }
+  setSelectedPatient(patient);
+  setSelectedAssessment(patient.assessment);
+
 };
   const getRiskClass = (riskLevel) => {
     switch (riskLevel?.toLowerCase()) {
@@ -722,7 +741,6 @@ const getCategorizedRiskFactors = (patient, assessment) => {
           const patient = selectedPatient;
           const assessment = selectedAssessment;
           const riskFactors = extractRiskFactors(patient, assessment);
-          const note = doctorNote || "No specific recommendations provided at this time.";
           const logoUrl = logo;
           const timestamp = new Date().toLocaleString();
 
@@ -784,7 +802,7 @@ const getCategorizedRiskFactors = (patient, assessment) => {
           pdfContainer.innerHTML = `
             <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #2563eb; padding-bottom: 8px;">
         <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-          <div style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: white; font-weight: bold; font-size: 20px; overflow: hidden;">
+          <div style="width: 192px; height: 96px; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: white; font-weight: bold; font-size: 20px; overflow: hidden;">
             <img src="${logoUrl}" 
                  alt="Brainline Logo" 
                  style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" 
@@ -792,8 +810,7 @@ const getCategorizedRiskFactors = (patient, assessment) => {
                  onerror="this.style.display='none'; this.parentElement.innerHTML='BL';" />
           </div>
           <div style="text-align: left;">
-            <h1 style="margin: 0; color: #2563eb; font-size: 24px; font-weight: bold;">BRAINLINE</h1>
-            <p style="margin: 2px 0; font-size: 14px; color: #666; font-weight: 500;">Purva Medical Trust</p>
+            <h1 style="margin: 0; color: #2563eb; font-size: 24px; font-weight: bold;">Brainline</h1>
             <p style="margin: 2px 0; font-size: 12px; color: #888;">A Mission to Spread Stroke Prevention Awareness</p>
           </div>
         </div>
@@ -882,8 +899,8 @@ const getCategorizedRiskFactors = (patient, assessment) => {
           
       <div style="margin-bottom: 20px; page-break-inside: avoid;">
         <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; padding-bottom: 3px;">Doctor's Recommendation</h3>
-        <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start;">
-          <div style="width: 100%;">${assessment.doctorRecommendation}</div>
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 50px; display: flex; align-items: flex-start; white-space: pre-wrap; word-wrap: break-word;">
+          <div style="width: 100%; white-space: pre-wrap;">${assessment.doctorRecommendation}</div>
         </div>
       </div>
           
@@ -1018,25 +1035,33 @@ const getCategorizedRiskFactors = (patient, assessment) => {
           </div>
         </div>
 
-        <!-- Social Media Links Grid -->
+        <!-- Social Media Links Grid - Enhanced Version -->
         <div style="text-align: center; margin-bottom: 15px;">
           <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1f2937; font-weight: bold;">Connect With Us</h4>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 11px;">
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px;">
             <div style="background: #3b82f6; color: white; padding: 8px; border-radius: 4px; text-align: center;">
-              <div style="font-weight: bold; margin-bottom: 2px;">Facebook</div>
-              <div style="font-size: 10px;">@PurvaMedicalTrust</div>
-            </div>
-            <div style="background: #1da1f2; color: white; padding: 8px; border-radius: 4px; text-align: center;">
-              <div style="font-weight: bold; margin-bottom: 2px;">Twitter</div>
-              <div style="font-size: 10px;">@BrainlineInfo</div>
+              <div style="font-weight: bold; margin-bottom: 4px;">📘 Facebook</div>
+              <div style="font-size: 10px;">
+                <a href="https://www.facebook.com/brainline.info"
+                   style="color: white; text-decoration: underline; font-weight: 500;">
+                   Follow us on Facebook
+                </a>
+              </div>
+              <div style="font-size: 9px; margin-top: 2px; opacity: 0.9;">
+                @brainline.info
+              </div>
             </div>
             <div style="background: #0e76a8; color: white; padding: 8px; border-radius: 4px; text-align: center;">
-              <div style="font-weight: bold; margin-bottom: 2px;">LinkedIn</div>
-              <div style="font-size: 10px;">Purva Medical Trust</div>
-            </div>
-            <div style="background: #25d366; color: white; padding: 8px; border-radius: 4px; text-align: center;">
-              <div style="font-weight: bold; margin-bottom: 2px;">WhatsApp</div>
-              <div style="font-size: 10px;">Health Updates</div>
+              <div style="font-weight: bold; margin-bottom: 4px;">💼 LinkedIn</div>
+              <div style="font-size: 10px;">
+                <a href="https://www.linkedin.com/company/brain-line-info/"
+                   style="color: white; text-decoration: underline; font-weight: 500;">
+                   Connect on LinkedIn
+                </a>
+              </div>
+              <div style="font-size: 9px; margin-top: 2px; opacity: 0.9;">
+                @brainline-info
+              </div>
             </div>
           </div>
         </div>
@@ -1211,7 +1236,7 @@ const getCategorizedRiskFactors = (patient, assessment) => {
                <img 
                  src={logo} 
                  alt="Brainline Logo" 
-                 className="w-16 h-16 lg:w-16 lg:h-16 object-contain"
+                 className="w-48 h-24 lg:w-48 lg:h-24 object-contain"
                />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">Doctor Dashboard</h2>
