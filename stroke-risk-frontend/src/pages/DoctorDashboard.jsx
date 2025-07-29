@@ -13,6 +13,7 @@ import html2pdf from 'html2pdf.js';
 import logo from '../components/logo.jpg';
 import qrcode from '../components/qr_code.png';
 import payqr from '../components/payqr.jpg';
+import doctorSignature from '../components/sign.png';
 import axios from 'axios';
 
 // Add this Modal component after your imports
@@ -747,6 +748,7 @@ const getCategorizedRiskFactors = (patient, assessment) => {
           // Add your WhatsApp community QR code URL here
           const whatsappQRCodeUrl = qrcode; // Replace with actual QR code URL
           const donationQRCodeUrl = payqr;
+          const doctorSignatureUrl = doctorSignature;
 
           // Generate chart images (same as generatePDF function)
           const { chart1Image, chart2Image, hasValidData, filteredRiskFactorsCount } = await generateChartImages(patient, assessment, riskFactors);
@@ -903,6 +905,32 @@ const getCategorizedRiskFactors = (patient, assessment) => {
           <div style="width: 100%; white-space: pre-wrap;">${assessment.doctorRecommendation}</div>
         </div>
       </div>
+
+      <!-- Doctor's Recommendation with Inline Signature -->
+      <div style="margin-bottom: 20px; page-break-inside: avoid;">
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+          <!-- Recommendation Text -->
+          <div style="flex: 1; padding: 15px; border-radius: 8px; font-size: 13px; min-height: 120px; display: flex; align-items: flex-start; white-space: pre-wrap; word-wrap: break-word;">
+          </div>
+          
+          <!-- Doctor's Signature Side Panel -->
+          <div style="width: 200px; text-align: center; padding: 15px; border-radius: 8px; background: #ffffff;">
+            <div style="margin-bottom: 10px; height: 60px; display: flex; align-items: center; justify-content: center;">
+              <img src="${doctorSignatureUrl}" 
+                   alt="Doctor's Signature" 
+                   style="max-width: 120px; max-height: 50px; object-fit: contain;" 
+                   crossorigin="anonymous"
+                   onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=&quot;font-size: 11px; color: #666; font-style: italic;&quot;>Digital Signature</div>';" />
+            </div>
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 8px;">
+              <p style="margin: 0; font-size: 12px; font-weight: bold; color: #1f2937;">Dr. Ashok Hande</p>
+              <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">Neurosurgeon</p>
+              <p style="margin: 2px 0; font-size: 10px; color: #6b7280;">MH-12345</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
           
       <!-- Disclaimer -->
       <div style="margin-bottom: 20px; background: #fffbeb; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; page-break-inside: avoid;">
